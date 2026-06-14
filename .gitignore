@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.expo/
+android/
+ios/
+coverage/
+.env
+*.local
+.DS_Store
+.vercel/
+.claude/
