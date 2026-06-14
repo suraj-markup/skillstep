@@ -52,3 +52,13 @@ A running journal of what was built, in what order, and what was decided along t
   `http://localhost:8081`.
 - Noted npm's current moderate audit warning: Expo pulls `uuid` through `xcode`; npm's
   forced fix would downgrade Expo to SDK 46, so we keep the SDK-compatible tree for now.
+
+## 2026-06-14 — M2: mock AI provider
+
+- Added `GeneratePlanInputSchema` to `shared` so mobile and server share the request
+  contract for plan generation.
+- Added a small `AiProvider` interface in `server/src/ai`; route handlers will depend on
+  this interface instead of importing a vendor SDK directly.
+- Added `MockAiProvider`, a deterministic provider backed by shared fixtures. This lets
+  us build and test plan generation without Gemini keys or network calls.
+- Added provider tests to prove mock output is a valid `Plan` and mirrors the request.

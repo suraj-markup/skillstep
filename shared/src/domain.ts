@@ -57,6 +57,14 @@ export const TechniqueSchema = z.object({
 });
 export type Technique = z.infer<typeof TechniqueSchema>;
 
+export const GeneratePlanInputSchema = z.object({
+  hobby: z.string().trim().min(1).max(60),
+  levelFrom: z.string().trim().min(1).max(160),
+  levelTo: z.string().trim().min(1).max(160),
+  weeklyHours: z.number().positive().max(60),
+});
+export type GeneratePlanInput = z.infer<typeof GeneratePlanInputSchema>;
+
 /**
  * The finite bridge between two skill levels: 5–8 techniques, no more.
  * The bounds are a product decision enforced at the schema level — an AI
