@@ -5,6 +5,6 @@ describe("GET /api/health", () => {
   it("responds ok without binding a port", async () => {
     const res = await app.request("/api/health");
     expect(res.status).toBe(200);
-    expect(await res.json()).toMatchObject({ ok: true, service: "whittle-api" });
+    expect(await res.json()).toMatchObject({ ok: true, service: "skillstep-api" });
   });
 });

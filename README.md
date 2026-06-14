@@ -1,8 +1,8 @@
-# Whittle
+# Skillstep
 
 **Get better at anything — six techniques at a time.**
 
-Whittle turns a vague hobby ambition ("get better at chess") into a finite, personal plan:
+Skillstep turns a vague hobby ambition ("get better at chess") into a finite, personal plan:
 5–8 techniques chosen by AI for your exact level jump, each with curated videos, a short
 primer, a concrete practice drill, and mastery criteria you check off as you improve.
 Strike out what isn't for you; the plan serves you, not the other way around.

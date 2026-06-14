@@ -1,4 +1,4 @@
-import { PlanSchema } from "@whittle/shared";
+import { PlanSchema } from "@skillstep/shared";
 import { describe, expect, it } from "vitest";
 import { MockAiProvider } from "./mockProvider";
 
@@ -20,7 +20,7 @@ describe("MockAiProvider", () => {
       levelFrom: "I know a few open chords",
       levelTo: "I can play a full song cleanly",
       weeklyHours: 3,
-      emoji: "🎸",
+      icon: "guitar",
       accent: "rose",
     });
     expect(plan.techniques).toHaveLength(6);
@@ -38,7 +38,7 @@ describe("MockAiProvider", () => {
 
     expect(plan.id).toBe("mock-plan-watercolor-sketching");
     expect(plan.hobby).toBe("Watercolor Sketching");
-    expect(plan.emoji).toBe("✨");
+    expect(plan.icon).toBe("sparkles");
     expect(plan.accent).toBe("amber");
   });
 });

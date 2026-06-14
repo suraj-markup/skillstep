@@ -11,6 +11,20 @@ export const ACCENTS = ["amber", "sage", "sky", "rose", "violet", "clay"] as con
 export const AccentSchema = z.enum(ACCENTS);
 export type Accent = z.infer<typeof AccentSchema>;
 
+export const PLAN_ICONS = [
+  "sparkles",
+  "strategy",
+  "cooking",
+  "guitar",
+  "camera",
+  "cards",
+  "fitness",
+  "art",
+  "book",
+] as const;
+export const PlanIconSchema = z.enum(PLAN_ICONS);
+export type PlanIcon = z.infer<typeof PlanIconSchema>;
+
 /**
  * How much a learning format matters for a given technique. The AI sets this
  * per technique; the UI weights its Watch / Read / Practice sections by it.
@@ -78,7 +92,8 @@ export const PlanSchema = z.object({
   weeklyHours: z.number().positive().max(60),
   /** The AI's visible reasoning for why the plan looks the way it does. */
   rationale: z.string().min(1).max(1200),
-  emoji: z.string().min(1).max(8),
+  /** Controlled visual key; the mobile app maps it to a native icon component. */
+  icon: PlanIconSchema,
   accent: AccentSchema,
   techniques: z.array(TechniqueSchema).min(5).max(8),
   createdAt: z.string().min(1),

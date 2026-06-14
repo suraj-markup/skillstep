@@ -6,7 +6,7 @@ const workspaceRoot = path.resolve(projectRoot, "..");
 
 const config = getDefaultConfig(projectRoot);
 
-// Make the local @whittle/shared workspace explicit for native and web bundles.
+// Make the local @skillstep/shared workspace explicit for native and web bundles.
 config.watchFolders = [workspaceRoot];
 config.resolver.nodeModulesPaths = [
   path.resolve(projectRoot, "node_modules"),

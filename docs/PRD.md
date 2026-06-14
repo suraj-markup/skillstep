@@ -1,4 +1,4 @@
-# Whittle — Product Requirements
+# Skillstep — Product Requirements
 
 ## Problem
 
@@ -13,7 +13,7 @@ People who want to get better at a hobby face three failures:
 3. **Progress** — Self-directed learning never defines what "done" looks like. Watching
   videos feels like progress but isn't; skills are built by doing.
 
-**Whittle's one job:** convert "I want to get better at X" into a finite, personal,
+**Skillstep's one job:** convert "I want to get better at X" into a finite, personal,
 completable plan — and make completing it feel real.
 
 ## Target user

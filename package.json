@@ -1,5 +1,5 @@
 {
-  "name": "whittle",
+  "name": "skillstep",
   "private": true,
   "version": "0.1.0",
   "description": "Get better at anything — six techniques at a time.",
@@ -9,8 +9,8 @@
     "shared"
   ],
   "scripts": {
-    "dev:mobile": "npm run start -w @whittle/mobile",
-    "dev:server": "npm run dev -w @whittle/server",
+    "dev:mobile": "npm run start -w @skillstep/mobile",
+    "dev:server": "npm run dev -w @skillstep/server",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "lint": "biome check .",

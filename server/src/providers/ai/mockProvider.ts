@@ -1,20 +1,26 @@
-import { type Accent, type GeneratePlanInput, makePlan, PlanSchema } from "@whittle/shared";
+import {
+  type Accent,
+  type GeneratePlanInput,
+  makePlan,
+  type PlanIcon,
+  PlanSchema,
+} from "@skillstep/shared";
 import type { AiProvider } from "./provider";
 
-const DEFAULT_IDENTITY: { emoji: string; accent: Accent } = { emoji: "✨", accent: "amber" };
+const DEFAULT_IDENTITY: { icon: PlanIcon; accent: Accent } = { icon: "sparkles", accent: "amber" };
 
-const HOBBY_IDENTITIES: Record<string, { emoji: string; accent: Accent }> = {
-  chess: { emoji: "♟️", accent: "sage" },
-  cooking: { emoji: "🍳", accent: "clay" },
-  guitar: { emoji: "🎸", accent: "rose" },
-  photography: { emoji: "📷", accent: "sky" },
-  poker: { emoji: "♠️", accent: "violet" },
+const MOCK_HOBBY_IDENTITIES: Record<string, { icon: PlanIcon; accent: Accent }> = {
+  chess: { icon: "strategy", accent: "sage" },
+  cooking: { icon: "cooking", accent: "clay" },
+  guitar: { icon: "guitar", accent: "rose" },
+  photography: { icon: "camera", accent: "sky" },
+  poker: { icon: "cards", accent: "violet" },
 };
 
 export class MockAiProvider implements AiProvider {
   async generatePlan(input: GeneratePlanInput) {
     const hobby = titleCase(input.hobby);
-    const identity = HOBBY_IDENTITIES[input.hobby.trim().toLowerCase()] ?? DEFAULT_IDENTITY;
+    const identity = MOCK_HOBBY_IDENTITIES[input.hobby.trim().toLowerCase()] ?? DEFAULT_IDENTITY;
 
     const plan = makePlan({
       id: `mock-plan-${slugify(input.hobby)}`,
@@ -22,7 +28,7 @@ export class MockAiProvider implements AiProvider {
       levelFrom: input.levelFrom,
       levelTo: input.levelTo,
       weeklyHours: input.weeklyHours,
-      emoji: identity.emoji,
+      icon: identity.icon,
       accent: identity.accent,
       rationale:
         `This mock plan narrows ${hobby} into a small set of practice-first techniques ` +

@@ -43,11 +43,11 @@ A running journal of what was built, in what order, and what was decided along t
 - Kept `shared` as a private workspace module because the AI plan schema is the contract
   both mobile and server must agree on.
 - Generated the initial Expo mobile app and replaced the starter screen with a small
-  Whittle shell that imports a preview plan from `@whittle/shared`.
+  Skillstep shell that imports a preview plan from `@skillstep/shared`.
 - Added Expo web runtime dependencies (`react-dom`, `react-native-web`) so the same
   mobile app can be smoke-tested in a browser.
 - Added `mobile/metro.config.js` so Metro explicitly watches the repo root and resolves
-  workspace packages like `@whittle/shared` during native and web bundling.
+  workspace packages like `@skillstep/shared` during native and web bundling.
 - Verified the Expo web dev server served HTML and the Metro bundle at
   `http://localhost:8081`.
 - Noted npm's current moderate audit warning: Expo pulls `uuid` through `xcode`; npm's
@@ -57,8 +57,59 @@ A running journal of what was built, in what order, and what was decided along t
 
 - Added `GeneratePlanInputSchema` to `shared` so mobile and server share the request
   contract for plan generation.
-- Added a small `AiProvider` interface in `server/src/ai`; route handlers will depend on
-  this interface instead of importing a vendor SDK directly.
+- Added a small `AiProvider` interface in `server/src/providers/ai`; route handlers will
+  depend on this interface instead of importing a vendor SDK directly.
 - Added `MockAiProvider`, a deterministic provider backed by shared fixtures. This lets
   us build and test plan generation without Gemini keys or network calls.
 - Added provider tests to prove mock output is a valid `Plan` and mirrors the request.
+
+## 2026-06-14 — M2: plan API route
+
+- Added `POST /api/plans`, backed by the injectable `AiProvider`.
+- The route validates request JSON with `GeneratePlanInputSchema`, validates provider
+  output with `PlanSchema`, returns `400` for bad user input, and returns `502` if a
+  provider violates the plan contract.
+- Skipped new route tests for now to keep the current learning pass focused on
+  implementation flow; verification is limited to typecheck, existing tests, lint, and
+  manual endpoint checks when needed.
+- Refactored the backend into `controllers/`, `services/`, and `repositories/`:
+  controllers handle HTTP, services handle product/business flow, and repositories own
+  data access. The current plan repository is intentionally no-op because the server
+  remains stateless.
+- Moved AI adapters under `providers/ai` so external systems live outside the
+  controller/service/repository layers.
+
+## 2026-06-15 — M1/M2: controlled plan icons
+
+- Replaced free-form plan `emoji` with a controlled `icon` key in the shared schema.
+- Updated mock AI identity data to return icon keys such as `strategy`, `guitar`, and
+  `camera`, with a `sparkles` fallback for unknown hobbies.
+- Added lucide native icons in mobile so the UI renders consistent, themeable icons
+  instead of platform-dependent emoji.
+
+## 2026-06-15 — M2/M3: server config
+
+- Added `server/src/config/env.ts` so env loading and validation live in one place.
+- `index.ts` now reads `PORT` through typed config instead of touching `process.env`
+  directly.
+- `GEMINI_API_KEY` and `YOUTUBE_API_KEY` are exposed as optional config values for the
+  upcoming provider integrations.
+
+## 2026-06-15 — M3: Gemini AI provider
+
+- Added `GeminiProvider` under `server/src/providers/ai`, using Gemini REST
+  `generateContent` with structured JSON output.
+- `index.ts` now chooses Gemini when `GEMINI_API_KEY` is present and falls back to
+  `MockAiProvider` otherwise.
+- Kept controllers and services model-agnostic; only the provider layer knows about
+  Gemini's API.
+
+## 2026-06-15 — M4: mobile API client
+
+- Added a centralized `mobile/src/api` layer inspired by SafeSplit's generated API
+  structure: one `SkillstepApi` entry point, `core/` HTTP primitives, and domain
+  `services/`.
+- `PlansService` validates outgoing plan requests with `GeneratePlanInputSchema` and
+  returned plans with `PlanSchema`, keeping mobile aligned with the shared contract.
+- The default API base URL is local development (`http://localhost:8787/api`) and can be
+  overridden when wiring device/emulator or deployed environments.

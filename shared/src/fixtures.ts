@@ -35,7 +35,7 @@ export function makePlan(overrides: Partial<Plan> = {}): Plan {
     weeklyHours: 4,
     rationale:
       "You win and lose on piece blunders right now, so this plan is mostly board safety and simple tactics.",
-    emoji: "♟️",
+    icon: "strategy",
     accent: "sage",
     techniques,
     createdAt: "2026-06-13T00:00:00.000Z",

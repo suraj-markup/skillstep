@@ -1,15 +1,42 @@
-import { makePlan } from "@whittle/shared";
+import { makePlan, type PlanIcon } from "@skillstep/shared";
 import { StatusBar } from "expo-status-bar";
+import {
+  BookOpen,
+  Camera,
+  Club,
+  CookingPot,
+  Crown,
+  Dumbbell,
+  Guitar,
+  Palette,
+  Sparkles,
+} from "lucide-react-native";
+import type { ComponentType } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 const previewPlan = makePlan();
+type IconComponent = ComponentType<{ color?: string; size?: number; strokeWidth?: number }>;
+
+const planIcons: Record<PlanIcon, IconComponent> = {
+  art: Palette,
+  book: BookOpen,
+  camera: Camera,
+  cards: Club,
+  cooking: CookingPot,
+  fitness: Dumbbell,
+  guitar: Guitar,
+  sparkles: Sparkles,
+  strategy: Crown,
+};
 
 export default function App() {
+  const PreviewIcon = planIcons[previewPlan.icon];
+
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
       <View style={styles.header}>
-        <Text style={styles.eyebrow}>Whittle</Text>
+        <Text style={styles.eyebrow}>Skillstep</Text>
         <Text style={styles.title}>Six techniques, one honest level jump.</Text>
         <Text style={styles.subtitle}>
           The mobile shell is wired to the shared domain model. Next we turn this into the wizard
@@ -20,7 +47,9 @@ export default function App() {
       <View style={styles.card}>
         <Text style={styles.cardLabel}>Shared preview plan</Text>
         <View style={styles.cardTitleRow}>
-          <Text style={styles.emoji}>{previewPlan.emoji}</Text>
+          <View style={styles.iconBadge}>
+            <PreviewIcon color="#256c63" size={24} strokeWidth={2.4} />
+          </View>
           <Text style={styles.cardTitle}>{previewPlan.hobby}</Text>
         </View>
         <Text style={styles.cardText}>{previewPlan.rationale}</Text>
@@ -80,8 +109,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 10,
   },
-  emoji: {
-    fontSize: 28,
+  iconBadge: {
+    alignItems: "center",
+    backgroundColor: "#e4f1ea",
+    borderColor: "#b9d7cd",
+    borderRadius: 8,
+    borderWidth: 1,
+    height: 42,
+    justifyContent: "center",
+    width: 42,
   },
   cardTitle: {
     color: "#1f2933",

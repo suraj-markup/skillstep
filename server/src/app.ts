@@ -1,10 +1,29 @@
 import { Hono } from "hono";
+import { registerPlanController } from "./controllers";
+import { type AiProvider, MockAiProvider } from "./providers/ai";
+import { NoopPlanRepository, type PlanRepository } from "./repositories";
+import { PlanService } from "./services";
 
 /**
  * The Hono app, separated from the Node entry point (index.ts) so tests can
  * exercise real routing in memory via `app.request()` and so a serverless
  * adapter can mount the same app at deploy time (ADR 0003).
  */
-export const app = new Hono().basePath("/api");
+export interface AppDependencies {
+  aiProvider?: AiProvider;
+  planRepository?: PlanRepository;
+}
 
-app.get("/health", (c) => c.json({ ok: true, service: "whittle-api" }));
+export function createApp(dependencies: AppDependencies = {}) {
+  const aiProvider = dependencies.aiProvider ?? new MockAiProvider();
+  const planRepository = dependencies.planRepository ?? new NoopPlanRepository();
+  const planService = new PlanService({ aiProvider, planRepository });
+  const app = new Hono().basePath("/api");
+
+  app.get("/health", (c) => c.json({ ok: true, service: "skillstep-api" }));
+  registerPlanController(app, planService);
+
+  return app;
+}
+
+export const app = createApp();

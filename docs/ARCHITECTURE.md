@@ -1,4 +1,4 @@
-# Whittle — Architecture
+# Skillstep — Architecture
 
 ## System overview
 
@@ -6,13 +6,14 @@
 ┌──────────────────────────────┐         ┌──────────────────────────────┐
 │  mobile (Expo / RN)          │         │  server (Hono)               │
 │  Android · iOS · web export  │  /api   │                              │
-│                              │ ──────► │  routes → services → providers│
+│                              │ ──────► │  controllers → services       │
 │  wizard → plan → technique   │         │            │                 │
 │  Zustand store (persisted    │         │            ├─ ai: Gemini ────┼──► Google AI
 │  to AsyncStorage; owns ALL   │         │            │   (mock in dev/ │
 │  user state)                 │         │            │    tests)       │
-└──────────────────────────────┘         │            └─ videos: ───────┼──► YouTube Data API
-        ▲                                │               + in-memory    │
+└──────────────────────────────┘         │            ├─ repositories   │
+        ▲                                │            └─ videos: ───────┼──► YouTube Data API
+                                         │               + in-memory    │
         └── shared ──────────────────────┤                 LRU cache    │
             Zod schemas + pure domain    └──────────────────────────────┘
             logic, imported by both sides
@@ -52,11 +53,22 @@ Keeping user state *out* of the `Plan` object is deliberate: a technique can be 
 or a plan regenerated without touching the user's progress, and persistence migrations
 only ever deal with one shape at a time.
 
+## Server folder structure
+
+- `controllers/` owns HTTP concerns: request parsing, status codes, response shapes.
+- `services/` owns business flow: call providers, validate generated plans, decide what
+  repository work is needed.
+- `repositories/` owns data access. The current plan repository is a no-op because this
+  version is local-first and stateless, but the folder gives us a clear place for cache or
+  persistence later.
+- `providers/` owns external adapters such as AI models or YouTube. Controllers never
+  import vendor SDKs directly.
+
 ## API surface
 
 | Endpoint | Purpose | AI calls |
 |----------|---------|----------|
-| `POST /api/levels` | Validate hobby is learnable; return hobby-specific level descriptors + identity (emoji, accent) | 1 small |
+| `POST /api/levels` | Validate hobby is learnable; return hobby-specific level descriptors + identity (icon, accent) | 1 small |
 | `POST /api/plans` | Generate the 5–8 technique plan with rationale | 1 large |
 | `POST /api/primer` | Generate one technique's reading primer (lazy, on first open) | 1 medium |
 | `GET /api/videos` | Resolve 2–3 real videos for a technique | 0 (YouTube API) |
