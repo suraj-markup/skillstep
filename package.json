@@ -4,8 +4,9 @@
   "version": "0.1.0",
   "description": "Get better at anything — six techniques at a time.",
   "workspaces": [
-    "packages/*",
-    "apps/*"
+    "mobile",
+    "server",
+    "shared"
   ],
   "scripts": {
     "dev:mobile": "npm run start -w @whittle/mobile",

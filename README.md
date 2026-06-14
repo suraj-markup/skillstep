@@ -18,9 +18,9 @@ Strike out what isn't for you; the plan serves you, not the other way around.
 ## Workspace layout
 
 ```
-packages/shared   Domain model (Zod schemas) + pure domain logic, shared by app and server
-apps/server      Hono API — AI plan generation, content curation, caching
-apps/mobile      Expo (React Native) app — wizard, plan view, technique workspace
+shared   Domain model (Zod schemas) + pure domain logic, shared by app and server
+server   Hono API — AI plan generation, content curation, caching
+mobile   Expo (React Native) app — wizard, plan view, technique workspace
 ```
 
 ## Getting started

@@ -11,7 +11,7 @@ speed, then chose native mobile as the primary experience.
 
 ## Decision
 
-One Expo (React Native + TypeScript) codebase in `apps/mobile`:
+One Expo (React Native + TypeScript) codebase in `mobile`:
 
 - **Android (native)** is the primary, shippable target — distributed as an APK.
 - **Web export** via React Native Web + expo-router covers desktop browsers from the
@@ -34,5 +34,5 @@ Supporting choices:
   product will actually be used.
 - Development needs the Expo dev server + an emulator or Expo Go; CI checks remain pure
   Node (typecheck, lint, unit tests) — no device farm.
-- Anything testable is kept out of components (in `packages/shared`/plain TS) because
+- Anything testable is kept out of components (in `shared`/plain TS) because
   RN component testing has a poor effort-to-signal ratio at this scale.

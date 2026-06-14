@@ -3,7 +3,7 @@ import { app } from "./app";
 
 // Root .env first (repo convention), local .env as fallback. Node's built-in
 // loader — no dotenv dependency (requires Node >= 21).
-for (const envPath of ["../../.env", ".env"]) {
+for (const envPath of ["../.env", ".env"]) {
   try {
     process.loadEnvFile(envPath);
     break;

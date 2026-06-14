@@ -4,7 +4,7 @@
 
 ```
 ┌──────────────────────────────┐         ┌──────────────────────────────┐
-│  apps/mobile (Expo / RN)     │         │  apps/server (Hono)          │
+│  mobile (Expo / RN)          │         │  server (Hono)               │
 │  Android · iOS · web export  │  /api   │                              │
 │                              │ ──────► │  routes → services → providers│
 │  wizard → plan → technique   │         │            │                 │
@@ -13,12 +13,12 @@
 │  user state)                 │         │            │    tests)       │
 └──────────────────────────────┘         │            └─ videos: ───────┼──► YouTube Data API
         ▲                                │               + in-memory    │
-        └── packages/shared ─────────────┤                 LRU cache    │
+        └── shared ──────────────────────┤                 LRU cache    │
             Zod schemas + pure domain    └──────────────────────────────┘
             logic, imported by both sides
 ```
 
-One repo, three workspaces. `packages/shared` is the single source of truth for the
+One repo, three top-level workspaces. `shared` is the single source of truth for the
 domain model: the server validates AI output against it, the client validates persisted
 state against it, and both sides share the inferred TypeScript types. The client is one
 React Native codebase that ships as a native Android app (the primary target), runs on
@@ -83,7 +83,7 @@ caches them.
 ## App architecture
 
 - **State**: one Zustand store, persisted to AsyncStorage with a schema version for
-  migrations. Derived values (progress) are pure functions from `packages/shared`,
+  migrations. Derived values (progress) are pure functions from `shared`,
   unit-tested without React.
 - **Navigation**: expo-router (file-based). On web export this doubles as real URLs.
 - **Form-factor pattern**: technique details render as a bottom sheet on phones and a
@@ -104,7 +104,7 @@ Test the things with decision content, skip ceremony:
 - API routes via Hono's in-memory `app.request()` — no ports, no mocks of our own code.
 - Persistence hydration/migration against corrupt and stale payloads.
 
-Screens stay thin: anything worth testing is extracted to `packages/shared` or a plain
+Screens stay thin: anything worth testing is extracted to `shared` or a plain
 TS module so it runs under Vitest without a React Native test harness.
 
 Not tested: third-party libraries, pixel rendering, framework internals.

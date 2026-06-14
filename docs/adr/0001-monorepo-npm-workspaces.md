@@ -11,12 +11,12 @@ turborepo, nx).
 
 ## Decision
 
-One repo, npm workspaces, three packages: `packages/shared`, `apps/server`,
-`apps/mobile`. No extra orchestrator.
+One repo, npm workspaces, three top-level packages: `shared`, `server`, `mobile`. No
+extra orchestrator.
 
 ## Why
 
-- `packages/shared` holds the Zod schemas once; both sides import the same runtime
+- `shared` holds the Zod schemas once; both sides import the same runtime
   validators *and* the same inferred TypeScript types. A contract change is one diff.
 - npm workspaces ship with npm itself — anyone can `npm install` and run with zero
   extra tooling. pnpm/turbo/nx add speed and caching this project's size doesn't need.

@@ -6,10 +6,10 @@ A running journal of what was built, in what order, and what was decided along t
 
 - Wrote PRD and architecture doc before any code; recorded the seven significant
   decisions as ADRs (`docs/adr/`) so the "why" survives the build.
-- Scaffolded an npm-workspaces monorepo: `packages/shared`, `apps/server`, and the
-  planned `apps/mobile` Expo app. Hand-rolled the early configs so each decision is
+- Scaffolded an npm-workspaces repo: `shared`, `server`, and the planned `mobile` Expo
+  app. Hand-rolled the early configs so each decision is
   inspectable before generators enter the repo.
-- Implemented the domain model in `packages/shared` as Zod schemas — the single source of
+- Implemented the domain model in `shared` as Zod schemas — the single source of
   truth both sides import — plus the first pure domain function, `computeProgress`, with
   tests documenting the struck-technique rule (struck techniques leave the denominator).
 - Server is a Hono app split into `app.ts` (testable, exported) and `index.ts` (Node
@@ -35,3 +35,20 @@ A running journal of what was built, in what order, and what was decided along t
   - `npm run test`
   - `npm run lint`
   - `npm run build` (currently a no-op until build scripts exist)
+
+## 2026-06-14 — M0/M1: folder structure cleanup
+
+- Flattened the repo from `apps/*` and `packages/*` into `mobile`, `server`, and
+  `shared` so the folder structure is easier to explain and deploy from the root.
+- Kept `shared` as a private workspace module because the AI plan schema is the contract
+  both mobile and server must agree on.
+- Generated the initial Expo mobile app and replaced the starter screen with a small
+  Whittle shell that imports a preview plan from `@whittle/shared`.
+- Added Expo web runtime dependencies (`react-dom`, `react-native-web`) so the same
+  mobile app can be smoke-tested in a browser.
+- Added `mobile/metro.config.js` so Metro explicitly watches the repo root and resolves
+  workspace packages like `@whittle/shared` during native and web bundling.
+- Verified the Expo web dev server served HTML and the Metro bundle at
+  `http://localhost:8081`.
+- Noted npm's current moderate audit warning: Expo pulls `uuid` through `xcode`; npm's
+  forced fix would downgrade Expo to SDK 46, so we keep the SDK-compatible tree for now.

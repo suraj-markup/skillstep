@@ -23,7 +23,7 @@ holds zero user state.
 ## Consequences
 
 - No cross-device sync. Accepted: the upgrade path is clean — lift the same
-  Zod-validated store shape behind an API; schemas already live in `packages/shared`.
+  Zod-validated store shape behind an API; schemas already live in `shared`.
 - Persistence carries a `schemaVersion`; hydration validates with Zod and quarantines
   corrupt state rather than crashing.
 - Storage is the app's database, so writes go through one store — no scattered
