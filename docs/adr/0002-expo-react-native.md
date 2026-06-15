@@ -26,7 +26,7 @@ Supporting choices:
   no Babel plugins to fight, every style traceable to a named token. NativeWind was the
   alternative; it buys Tailwind DX at the cost of build-config complexity and a runtime
   we'd have to defend.
-- **Zustand + AsyncStorage** for state/persistence (see ADR 0004).
+- **SQLite for durable progress + Zustand for temporary UI state** (see ADR 0004).
 
 ## Consequences
 

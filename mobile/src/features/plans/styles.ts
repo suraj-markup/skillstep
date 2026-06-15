@@ -1,0 +1,231 @@
+import { StyleSheet } from "react-native";
+
+import { colors } from "../../theme/colors";
+
+export { colors };
+
+export const styles = StyleSheet.create({
+  container: {
+    backgroundColor: colors.background,
+    flexGrow: 1,
+    gap: 20,
+    justifyContent: "flex-start",
+    minHeight: "100%",
+    padding: 24,
+    paddingBottom: 40,
+    paddingTop: 72,
+  },
+  header: {
+    gap: 12,
+  },
+  eyebrow: {
+    color: colors.clay,
+    fontSize: 15,
+    fontWeight: "700",
+    letterSpacing: 0,
+    textTransform: "uppercase",
+  },
+  title: {
+    color: colors.ink,
+    fontSize: 38,
+    fontWeight: "800",
+    letterSpacing: 0,
+    lineHeight: 42,
+  },
+  subtitle: {
+    color: colors.muted,
+    fontSize: 17,
+    lineHeight: 25,
+  },
+  primaryButton: {
+    alignItems: "center",
+    backgroundColor: colors.sage,
+    borderRadius: 8,
+    flexDirection: "row",
+    gap: 9,
+    justifyContent: "center",
+    minHeight: 52,
+    paddingHorizontal: 18,
+  },
+  primaryButtonPressed: {
+    opacity: 0.82,
+  },
+  primaryButtonText: {
+    color: colors.card,
+    fontSize: 16,
+    fontWeight: "800",
+  },
+  notice: {
+    backgroundColor: colors.dangerWash,
+    borderColor: colors.dangerBorder,
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: 4,
+    padding: 14,
+  },
+  noticeTitle: {
+    color: colors.dangerTitle,
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  noticeText: {
+    color: colors.dangerText,
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  loadingRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 10,
+  },
+  loadingText: {
+    color: colors.muted,
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  planSwitcher: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  planChip: {
+    alignItems: "center",
+    backgroundColor: colors.card,
+    borderColor: "#c7d8cf",
+    borderRadius: 8,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: 7,
+    minHeight: 38,
+    paddingHorizontal: 12,
+  },
+  planChipSelected: {
+    backgroundColor: colors.sage,
+    borderColor: colors.sage,
+  },
+  planChipText: {
+    color: colors.sageText,
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  planChipTextSelected: {
+    color: colors.card,
+  },
+  card: {
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: 12,
+    padding: 18,
+  },
+  cardLabel: {
+    color: colors.tan,
+    fontSize: 13,
+    fontWeight: "700",
+    letterSpacing: 0,
+    textTransform: "uppercase",
+  },
+  cardTitleRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 10,
+  },
+  cardTitleStack: {
+    flex: 1,
+    gap: 2,
+  },
+  iconBadge: {
+    alignItems: "center",
+    backgroundColor: colors.sageWash,
+    borderColor: colors.sageBorder,
+    borderRadius: 8,
+    borderWidth: 1,
+    height: 42,
+    justifyContent: "center",
+    width: 42,
+  },
+  cardTitle: {
+    color: colors.ink,
+    flexShrink: 1,
+    fontSize: 24,
+    fontWeight: "800",
+  },
+  cardText: {
+    color: "#46515e",
+    fontSize: 16,
+    lineHeight: 23,
+  },
+  cardMeta: {
+    color: colors.sage,
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  progressTrack: {
+    backgroundColor: colors.track,
+    borderRadius: 999,
+    height: 8,
+    overflow: "hidden",
+  },
+  progressFill: {
+    backgroundColor: colors.sage,
+    borderRadius: 999,
+    height: "100%",
+  },
+  techniqueList: {
+    borderTopColor: "#ebe1d1",
+    borderTopWidth: 1,
+    gap: 10,
+    paddingTop: 4,
+  },
+  techniqueRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 12,
+    minHeight: 48,
+  },
+  techniqueNumber: {
+    backgroundColor: "#eee5d7",
+    borderRadius: 8,
+    color: colors.tan,
+    fontSize: 14,
+    fontWeight: "800",
+    overflow: "hidden",
+    paddingVertical: 6,
+    textAlign: "center",
+    width: 32,
+  },
+  techniqueTextStack: {
+    flex: 1,
+    gap: 2,
+  },
+  techniqueName: {
+    color: colors.ink,
+    fontSize: 16,
+    fontWeight: "800",
+  },
+  techniqueMeta: {
+    color: "#687381",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  emptyState: {
+    alignItems: "flex-start",
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: 10,
+    padding: 18,
+  },
+  emptyTitle: {
+    color: colors.ink,
+    fontSize: 20,
+    fontWeight: "800",
+  },
+  emptyText: {
+    color: colors.muted,
+    fontSize: 16,
+    lineHeight: 23,
+  },
+});

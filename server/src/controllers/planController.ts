@@ -1,5 +1,6 @@
 import { GeneratePlanInputSchema } from "@skillstep/shared";
 import type { Hono } from "hono";
+import { AiProviderError } from "../providers/ai";
 import { InvalidPlanOutputError, type PlanService } from "../services";
 
 export function registerPlanController(app: Hono, planService: PlanService) {
@@ -17,6 +18,18 @@ export function registerPlanController(app: Hono, planService: PlanService) {
     } catch (error) {
       if (error instanceof InvalidPlanOutputError) {
         return c.json({ error: "AI provider returned an invalid plan", issues: error.issues }, 502);
+      }
+
+      if (error instanceof AiProviderError) {
+        return c.json(
+          {
+            error: "AI provider request failed",
+            message: error.message,
+            upstreamCode: error.upstreamCode,
+            upstreamStatus: error.upstreamStatus,
+          },
+          502,
+        );
       }
 
       throw error;

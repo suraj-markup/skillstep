@@ -1,0 +1,190 @@
+import { StyleSheet } from "react-native";
+
+import { colors } from "../../theme/colors";
+
+export const onboardingStyles = StyleSheet.create({
+  shell: {
+    backgroundColor: colors.background,
+    flexGrow: 1,
+    gap: 22,
+    justifyContent: "space-between",
+    minHeight: "100%",
+    padding: 24,
+    paddingBottom: 40,
+    paddingTop: 64,
+  },
+  intro: {
+    gap: 12,
+  },
+  eyebrow: {
+    color: colors.clay,
+    fontSize: 15,
+    fontWeight: "800",
+    letterSpacing: 0,
+    textTransform: "uppercase",
+  },
+  title: {
+    color: colors.ink,
+    fontSize: 37,
+    fontWeight: "800",
+    letterSpacing: 0,
+    lineHeight: 42,
+  },
+  subtitle: {
+    color: colors.muted,
+    fontSize: 17,
+    lineHeight: 25,
+  },
+  stepPanel: {
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: 18,
+    padding: 18,
+  },
+  stepHeader: {
+    gap: 10,
+  },
+  stepMeta: {
+    color: colors.tan,
+    fontSize: 13,
+    fontWeight: "800",
+    letterSpacing: 0,
+    textTransform: "uppercase",
+  },
+  stepTitle: {
+    color: colors.ink,
+    fontSize: 24,
+    fontWeight: "800",
+    lineHeight: 30,
+  },
+  stepHint: {
+    color: colors.muted,
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  progressTrack: {
+    backgroundColor: colors.track,
+    borderRadius: 999,
+    height: 8,
+    overflow: "hidden",
+  },
+  progressFill: {
+    backgroundColor: colors.sage,
+    borderRadius: 999,
+    height: "100%",
+  },
+  input: {
+    backgroundColor: "#fffaf1",
+    borderColor: "#d8c8af",
+    borderRadius: 8,
+    borderWidth: 1,
+    color: colors.ink,
+    fontSize: 17,
+    lineHeight: 24,
+    minHeight: 56,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  multilineInput: {
+    minHeight: 116,
+    textAlignVertical: "top",
+  },
+  suggestions: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  suggestionChip: {
+    backgroundColor: colors.sageWash,
+    borderColor: colors.sageBorder,
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+  },
+  suggestionText: {
+    color: colors.sageText,
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  errorNotice: {
+    backgroundColor: colors.dangerWash,
+    borderColor: colors.dangerBorder,
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: 4,
+    padding: 14,
+  },
+  errorTitle: {
+    color: colors.dangerTitle,
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  errorText: {
+    color: colors.dangerText,
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  actions: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  secondaryButton: {
+    alignItems: "center",
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+    borderRadius: 8,
+    borderWidth: 1,
+    flex: 1,
+    justifyContent: "center",
+    minHeight: 52,
+  },
+  secondaryButtonDisabled: {
+    opacity: 0.45,
+  },
+  secondaryButtonText: {
+    color: colors.ink,
+    fontSize: 16,
+    fontWeight: "800",
+  },
+  primaryButton: {
+    alignItems: "center",
+    backgroundColor: colors.sage,
+    borderRadius: 8,
+    flex: 1,
+    flexDirection: "row",
+    gap: 8,
+    justifyContent: "center",
+    minHeight: 52,
+  },
+  primaryButtonDisabled: {
+    opacity: 0.45,
+  },
+  primaryButtonText: {
+    color: colors.card,
+    fontSize: 16,
+    fontWeight: "800",
+  },
+  intentList: {
+    gap: 10,
+  },
+  intentRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 10,
+  },
+  intentDot: {
+    backgroundColor: colors.sage,
+    borderRadius: 999,
+    height: 8,
+    width: 8,
+  },
+  intentText: {
+    color: colors.muted,
+    flex: 1,
+    fontSize: 15,
+    lineHeight: 21,
+  },
+});

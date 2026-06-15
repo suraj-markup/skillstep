@@ -12,7 +12,7 @@ export class FetchHttpRequest implements HttpRequest {
 
   constructor(private readonly config: ApiClientConfig) {
     this.baseUrl = normalizeBaseUrl(config.baseUrl);
-    this.fetchImpl = config.fetchImpl ?? fetch;
+    this.fetchImpl = config.fetchImpl ?? globalThis.fetch.bind(globalThis);
   }
 
   async request(options: ApiRequestOptions): Promise<unknown> {

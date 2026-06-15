@@ -1,0 +1,18 @@
+export const colors = {
+  background: "#f7f3ea",
+  border: "#dacdb8",
+  card: "#fffdf8",
+  clay: "#8a4b2a",
+  dangerBorder: "#efb78f",
+  dangerText: "#71381f",
+  dangerTitle: "#8a3f20",
+  dangerWash: "#fff1e8",
+  ink: "#1f2933",
+  muted: "#56616f",
+  sage: "#256c63",
+  sageBorder: "#b9d7cd",
+  sageText: "#2e625b",
+  sageWash: "#e4f1ea",
+  tan: "#7d6b57",
+  track: "#e8dfcf",
+} as const;

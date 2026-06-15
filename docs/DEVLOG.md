@@ -113,3 +113,75 @@ A running journal of what was built, in what order, and what was decided along t
   returned plans with `PlanSchema`, keeping mobile aligned with the shared contract.
 - The default API base URL is local development (`http://localhost:8787/api`) and can be
   overridden when wiring device/emulator or deployed environments.
+
+## 2026-06-15 — M5: SQLite persistence decision
+
+- Updated the local-first architecture from AsyncStorage persistence to SQLite
+  persistence.
+- Durable user progress will live in mobile SQLite: plans, ordered techniques, mastery
+  criteria, technique statuses, and cached content.
+- Zustand remains available for temporary UI state only.
+
+## 2026-06-15 — M5: SQLite DB foundation
+
+- Added the first mobile database module under `mobile/src/db`.
+- Created the initial SQLite schema for plans, ordered techniques, mastery criteria,
+  technique statuses, and lazily cached technique content.
+- Added a small migration runner that uses SQLite `PRAGMA user_version` so future
+  schema changes have a clean upgrade path.
+
+## 2026-06-15 — M5: mobile plan repository
+
+- Added `mobile/src/db/planRepository.ts` as the first SQLite repository.
+- The repository can save generated plans, reload full plans, update technique
+  statuses, toggle mastery criteria, and return progress state for `computeProgress`.
+- `savePlan` validates against the shared `PlanSchema` and keeps user progress
+  separate from AI-generated plan content.
+
+## 2026-06-15 — M6: mobile plan flow wiring
+
+- Added `mobile/src/features/plans/usePlans.ts` to coordinate the API client and
+  SQLite repository from one mobile-facing hook.
+- The mobile shell now loads saved plans from SQLite, generates a starter plan through
+  `POST /api/plans`, saves it locally, and renders the selected plan with progress.
+- Kept the first UI flow intentionally narrow so the next pass can focus on the real
+  plan-generation wizard and technique progress interactions.
+
+## 2026-06-15 — M6: mobile feature structure cleanup
+
+- Split the plan UI out of `App.tsx` into feature-owned screen, component, icon, and
+  style modules under `mobile/src/features/plans`.
+- Kept the hook/repository/API boundaries intact so the UI composes behavior without
+  knowing SQL or HTTP details.
+- Documented the local Gemini key setup in `README.md`.
+
+## 2026-06-15 — M6: Gemini live-key verification
+
+- Restarted the backend with local Gemini keys loaded from `.env`.
+- Updated the Gemini REST payload to use `responseMimeType` and `responseJsonSchema`
+  for structured JSON output.
+- Added a typed provider error so upstream Gemini failures return structured API JSON
+  instead of a generic server error.
+
+## 2026-06-15 — M6: mobile fetch binding fix
+
+- Fixed the mobile API client on web by binding the default `fetch` implementation to
+  `globalThis`.
+- This prevents the browser-only `Illegal invocation` error when the centralized API
+  layer calls `fetch` through a stored function reference.
+
+## 2026-06-15 — M6: local web CORS
+
+- Added Hono CORS middleware for Expo web development origins.
+- Verified `OPTIONS /api/plans` now returns a valid preflight response and browser-origin
+  `POST /api/plans` succeeds.
+
+## 2026-06-15 — M7: onboarding flow
+
+- Added a first real onboarding flow under `mobile/src/features/onboarding`.
+- New users now answer the core product questions: hobby, current level, target level,
+  and weekly practice time.
+- The onboarding submit path calls the existing plan API, saves the generated plan to
+  SQLite, and then shows the saved plan dashboard.
+- Moved shared color tokens into `mobile/src/theme` so feature folders do not depend on
+  each other's styling modules.

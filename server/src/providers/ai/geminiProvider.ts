@@ -5,7 +5,7 @@ import {
   type Plan,
   PlanSchema,
 } from "@skillstep/shared";
-import type { AiProvider } from "./provider";
+import { type AiProvider, AiProviderError } from "./provider";
 
 export interface GeminiProviderOptions {
   apiKey: string;
@@ -29,20 +29,14 @@ export class GeminiProvider implements AiProvider {
       body: JSON.stringify({
         contents: [{ parts: [{ text: buildPlanPrompt(input) }] }],
         generationConfig: {
-          responseFormat: {
-            text: {
-              mimeType: "application/json",
-              schema: planJsonSchema,
-            },
-          },
+          responseMimeType: "application/json",
+          responseJsonSchema: planJsonSchema,
         },
       }),
     });
 
     if (!response.ok) {
-      throw new Error(
-        `Gemini plan generation failed with ${response.status}: ${await response.text()}`,
-      );
+      throw await readGeminiError(response);
     }
 
     const payload = (await response.json()) as GeminiGenerateContentResponse;
@@ -55,6 +49,16 @@ export class GeminiProvider implements AiProvider {
 
     return parsed.data;
   }
+}
+
+async function readGeminiError(response: Response): Promise<AiProviderError> {
+  const text = await response.text();
+  const body = safeJsonParse(text);
+  const error = readProperty(body, "error");
+  const message = readString(error, "message") ?? `Gemini request failed with ${response.status}`;
+  const code = readString(error, "status");
+
+  return new AiProviderError(message, response.status, code);
 }
 
 function buildGenerateContentUrl(model: string): string {
@@ -97,6 +101,23 @@ function extractText(response: GeminiGenerateContentResponse): string {
   }
 
   return text;
+}
+
+function safeJsonParse(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return undefined;
+  }
+}
+
+function readString(body: unknown, key: string): string | undefined {
+  const value = readProperty(body, key);
+  return typeof value === "string" ? value : undefined;
+}
+
+function readProperty(body: unknown, key: string): unknown {
+  return typeof body === "object" && body !== null ? body[key as keyof typeof body] : undefined;
 }
 
 interface GeminiGenerateContentResponse {

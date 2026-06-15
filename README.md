@@ -36,6 +36,18 @@ npm run dev:mobile         # Expo dev server — press "a" for Android emulator,
 The app also runs in a browser (`w` in the Expo CLI) via React Native Web — that's the
 "one codebase, phone and desktop" story (see docs/adr/0002).
 
+## Gemini setup
+
+Add your Gemini key to the root `.env` file:
+
+```bash
+GEMINI_API_KEY=your_key_here
+GEMINI_MODEL=gemini-2.5-flash
+```
+
+Restart `npm run dev:server` after changing `.env`. When `GEMINI_API_KEY` is present,
+the server uses Gemini; otherwise it falls back to the mock AI provider.
+
 ## Quality gates
 
 ```bash

@@ -8,9 +8,9 @@
 │  Android · iOS · web export  │  /api   │                              │
 │                              │ ──────► │  controllers → services       │
 │  wizard → plan → technique   │         │            │                 │
-│  Zustand store (persisted    │         │            ├─ ai: Gemini ────┼──► Google AI
-│  to AsyncStorage; owns ALL   │         │            │   (mock in dev/ │
-│  user state)                 │         │            │    tests)       │
+│  SQLite owns persisted       │         │            ├─ ai: Gemini ────┼──► Google AI
+│  user progress; Zustand      │         │            │   (mock in dev/ │
+│  owns temporary UI state     │         │            │    tests)       │
 └──────────────────────────────┘         │            ├─ repositories   │
         ▲                                │            └─ videos: ───────┼──► YouTube Data API
                                          │               + in-memory    │
@@ -53,6 +53,11 @@ Keeping user state *out* of the `Plan` object is deliberate: a technique can be 
 or a plan regenerated without touching the user's progress, and persistence migrations
 only ever deal with one shape at a time.
 
+Persisted mobile data lives in SQLite. Plans, techniques, mastery criteria, technique
+statuses, and cached content are relational enough that SQLite is a better fit than a
+single key-value blob. Zustand remains useful for temporary UI state (current wizard step,
+loading flags, selected card), but SQLite is the source of truth for learning progress.
+
 ## Server folder structure
 
 - `controllers/` owns HTTP concerns: request parsing, status codes, response shapes.
@@ -90,13 +95,15 @@ caches them.
 | LLM rate-limited (429) | Surface retry-after; client shows a friendly "free tier breather" state |
 | YouTube quota exhausted | Fall back to AI-crafted search links; server cache (7-day TTL) makes this rare |
 | Offline | Shell + all persisted plans fully usable; only generation disabled |
-| Corrupt localStorage | Zod-validate on hydrate; quarantine bad state instead of crashing |
+| Corrupt local SQLite rows | Zod-validate rows at repository boundaries; quarantine or ignore bad records instead of crashing |
 
 ## App architecture
 
-- **State**: one Zustand store, persisted to AsyncStorage with a schema version for
-  migrations. Derived values (progress) are pure functions from `shared`,
-  unit-tested without React.
+- **State**: SQLite stores durable app data: plans, techniques, statuses, checked
+  criteria, and cached content. Zustand is reserved for temporary UI state. Derived values
+  (progress) are pure functions from `shared`, unit-tested without React.
+- **Persistence**: `expo-sqlite` with explicit migrations. Repository modules read/write
+  SQLite rows and map them back into shared domain objects.
 - **Navigation**: expo-router (file-based). On web export this doubles as real URLs.
 - **Form-factor pattern**: technique details render as a bottom sheet on phones and a
   side panel on wide screens (tablet / desktop web) — same content component, two

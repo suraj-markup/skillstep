@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { cors } from "hono/cors";
 import { registerPlanController } from "./controllers";
 import { type AiProvider, MockAiProvider } from "./providers/ai";
 import { NoopPlanRepository, type PlanRepository } from "./repositories";
@@ -19,6 +20,15 @@ export function createApp(dependencies: AppDependencies = {}) {
   const planRepository = dependencies.planRepository ?? new NoopPlanRepository();
   const planService = new PlanService({ aiProvider, planRepository });
   const app = new Hono().basePath("/api");
+
+  app.use(
+    "*",
+    cors({
+      allowHeaders: ["content-type"],
+      allowMethods: ["GET", "POST", "OPTIONS"],
+      origin: ["http://localhost:8081", "http://127.0.0.1:8081"],
+    }),
+  );
 
   app.get("/health", (c) => c.json({ ok: true, service: "skillstep-api" }));
   registerPlanController(app, planService);
