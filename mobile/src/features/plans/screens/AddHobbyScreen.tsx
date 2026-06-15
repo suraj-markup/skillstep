@@ -27,7 +27,15 @@ export function AddHobbyScreen({
   onSelectDefaultHobby,
   searchValue,
 }: AddHobbyScreenProps) {
-  const isSearching = searchValue.trim().length > 0;
+  const searchQuery = searchValue.trim().toLowerCase();
+  const isSearching = searchQuery.length > 0;
+  const visibleHobbies = isSearching
+    ? defaultHobbies.filter((hobby) => {
+        const searchableText = `${hobby.name} ${hobby.description}`.toLowerCase();
+        return searchableText.includes(searchQuery);
+      })
+    : defaultHobbies;
+  const canCreateNewHobby = isSearching && visibleHobbies.length === 0;
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -37,25 +45,37 @@ export function AddHobbyScreen({
       </Pressable>
 
       <View style={styles.header}>
-        <Text style={styles.eyebrow}>Add hobby</Text>
         <Text style={styles.title}>Search any hobby</Text>
         <Text style={styles.subtitle}>
           Use this when the hobby is not in the default list on your home screen.
         </Text>
       </View>
 
-      <View style={styles.searchPanel}>
-        <HobbySearchBar onChangeText={onChangeSearch} onSubmit={onSearch} value={searchValue} />
-      </View>
+      <HobbySearchBar
+        canSubmit={canCreateNewHobby}
+        onChangeText={onChangeSearch}
+        onSubmit={onSearch}
+        submitLabel={canCreateNewHobby ? "Create" : "Go"}
+        value={searchValue}
+      />
 
-      {!isSearching ? (
-        <View style={styles.suggestionsSection}>
-          <View style={styles.sectionTitleStack}>
-            <Text style={styles.sectionTitle}>Default hobbies</Text>
-            <Text style={styles.sectionSubtitle}>Pick one here, or search for something else.</Text>
-          </View>
+      <View style={styles.suggestionsSection}>
+        <View style={styles.sectionTitleStack}>
+          <Text style={styles.sectionTitle}>
+            {isSearching ? "Matching hobbies" : "Default hobbies"}
+          </Text>
+          <Text style={styles.sectionSubtitle}>
+            {canCreateNewHobby
+              ? "No match found. Create a new hobby from your search."
+              : isSearching
+                ? "Pick a match below. New hobbies are created only when there is no match."
+                : "Pick one here, or search for something else."}
+          </Text>
+        </View>
+
+        {visibleHobbies.length > 0 ? (
           <View style={styles.hobbyGrid}>
-            {defaultHobbies.map((hobby) => (
+            {visibleHobbies.map((hobby) => (
               <HobbyCard
                 description={hobby.description}
                 icon={hobby.icon}
@@ -65,8 +85,15 @@ export function AddHobbyScreen({
               />
             ))}
           </View>
-        </View>
-      ) : null}
+        ) : (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyTitle}>No default match</Text>
+            <Text style={styles.emptyText}>
+              Tap Create to build a custom plan for “{searchValue.trim()}”.
+            </Text>
+          </View>
+        )}
+      </View>
     </ScrollView>
   );
 }
@@ -91,7 +118,7 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: colors.surface.card,
     flexGrow: 1,
-    gap: spacing.panel,
+    gap: spacing.xl,
     minHeight: "100%",
     padding: spacing.screen,
     paddingBottom: spacing.screenBottom,
@@ -112,13 +139,6 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: spacing.lg,
   },
-  searchPanel: {
-    backgroundColor: colors.surface.successSoft,
-    borderColor: colors.borders.success,
-    borderRadius: 28,
-    borderWidth: 1,
-    padding: spacing.panel,
-  },
   subtitle: {
     ...typography.bodyLarge,
     color: colors.text.muted,
@@ -137,9 +157,26 @@ const styles = StyleSheet.create({
   },
   suggestionsSection: {
     gap: spacing.xl,
+    paddingTop: spacing.md,
   },
   title: {
     ...typography.displaySmall,
     color: colors.text.primary,
+  },
+  emptyState: {
+    backgroundColor: colors.surface.input,
+    borderColor: colors.borders.default,
+    borderRadius: 22,
+    borderWidth: 1,
+    gap: spacing.sm,
+    padding: spacing.panel,
+  },
+  emptyTitle: {
+    ...typography.titleSmall,
+    color: colors.text.primary,
+  },
+  emptyText: {
+    ...typography.bodyMedium,
+    color: colors.text.muted,
   },
 });

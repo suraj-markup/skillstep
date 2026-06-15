@@ -1,7 +1,15 @@
 import { StatusBar } from "expo-status-bar";
 import { Plus, Sparkles } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import {
+  BackHandler,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
 
 import {
   getUserHobbies,
@@ -40,6 +48,7 @@ export function PlansHomeScreen() {
     selectedPlanStates,
     selectPlan,
     setTechniqueStatus,
+    toggleCriterion,
   } = usePlans();
   const { width: screenWidth } = useWindowDimensions();
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -50,6 +59,13 @@ export function PlansHomeScreen() {
   const [selectedHobby, setSelectedHobby] = useState<string | null>(null);
   const [detailPlanId, setDetailPlanId] = useState<string | null>(null);
   const [userHobbies, setUserHobbies] = useState<UserHobby[]>([]);
+
+  const goBackToDashboard = useCallback(() => {
+    setDetailPlanId(null);
+    setPendingSearchHobby(null);
+    setSelectedHobby(null);
+    setMode("dashboard");
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -69,6 +85,19 @@ export function PlansHomeScreen() {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
+      if (mode === "dashboard") {
+        return false;
+      }
+
+      goBackToDashboard();
+      return true;
+    });
+
+    return () => subscription.remove();
+  }, [goBackToDashboard, mode]);
 
   async function completeOnboarding(name: string) {
     const savedProfile = await saveUserProfile(name);
@@ -227,7 +256,7 @@ export function PlansHomeScreen() {
         errorMessage={errorMessage}
         hobby={selectedHobby}
         isGenerating={isGenerating}
-        onBack={() => setMode("dashboard")}
+        onBack={goBackToDashboard}
         onSubmit={submitPlan}
       />
     );
@@ -237,7 +266,7 @@ export function PlansHomeScreen() {
     return (
       <AddHobbyScreen
         defaultHobbies={DEFAULT_HOBBIES}
-        onBack={() => setMode("dashboard")}
+        onBack={goBackToDashboard}
         onChangeSearch={setSearchValue}
         onSearch={() => startCustomHobbySearch(searchValue)}
         onSelectDefaultHobby={(hobby, icon) => openHobbyCard(hobby, { icon, source: "default" })}
@@ -249,11 +278,9 @@ export function PlansHomeScreen() {
   if (mode === "detail" && detailPlan) {
     return (
       <PlanDetailScreen
-        onBack={() => {
-          setDetailPlanId(null);
-          setMode("dashboard");
-        }}
+        onBack={goBackToDashboard}
         onSetTechniqueStatus={setTechniqueStatus}
+        onToggleCriterion={toggleCriterion}
         plan={detailPlan}
         progressPercent={detailPlanProgress?.percent ?? 0}
         states={selectedPlanStates}
@@ -262,15 +289,7 @@ export function PlansHomeScreen() {
   }
 
   if (mode === "finding" && pendingSearchHobby) {
-    return (
-      <FindingRecommendationsScreen
-        hobby={pendingSearchHobby}
-        onCancel={() => {
-          setPendingSearchHobby(null);
-          setMode("dashboard");
-        }}
-      />
-    );
+    return <FindingRecommendationsScreen hobby={pendingSearchHobby} onCancel={goBackToDashboard} />;
   }
 
   return (
@@ -298,14 +317,6 @@ export function PlansHomeScreen() {
         <View style={styles.hobbySection}>
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionTitle}>Your hobbies</Text>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => setMode("add")}
-              style={({ pressed }) => [styles.addHobbyButton, pressed ? styles.pressed : undefined]}
-            >
-              <Plus color={colors.text.inverse} size={18} strokeWidth={2.6} />
-              <Text style={styles.addHobbyButtonText}>Add</Text>
-            </Pressable>
           </View>
           <ScrollView
             horizontal

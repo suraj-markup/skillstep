@@ -132,3 +132,10 @@ export const TechniqueContentSchema = z.object({
   primer: z.string().optional(),
 });
 export type TechniqueContent = z.infer<typeof TechniqueContentSchema>;
+
+export const ResolveTechniqueContentInputSchema = z.object({
+  drillText: z.string().min(1).max(600),
+  hobby: z.string().trim().min(1).max(60),
+  techniqueName: z.string().trim().min(1).max(120),
+});
+export type ResolveTechniqueContentInput = z.infer<typeof ResolveTechniqueContentInputSchema>;

@@ -3,25 +3,14 @@ import {
   ArrowLeft,
   BookOpen,
   Check,
-  ChevronLeft,
-  ChevronRight,
   Clock3,
   Dumbbell,
-  Play,
-  RotateCcw,
-  SkipForward,
+  MoveLeft,
+  MoveRight,
   Video,
 } from "lucide-react-native";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  Animated,
-  PanResponder,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { colors } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
@@ -33,6 +22,7 @@ import { planIcons } from "../planIcons";
 interface PlanDetailScreenProps {
   onBack: () => void;
   onSetTechniqueStatus: (techniqueId: string, status: TechniqueStatus) => Promise<void>;
+  onToggleCriterion: (criterionId: string) => Promise<void>;
   plan: Plan;
   progressPercent: number;
   states: Record<string, TechniqueUserState>;
@@ -41,20 +31,20 @@ interface PlanDetailScreenProps {
 export function PlanDetailScreen({
   onBack,
   onSetTechniqueStatus,
+  onToggleCriterion,
   plan,
   progressPercent,
   states,
 }: PlanDetailScreenProps) {
   const Icon = planIcons[plan.icon];
   const [activeIndex, setActiveIndex] = useState(() => getFirstActiveIndex(plan, states));
-  const position = useRef(new Animated.ValueXY()).current;
   const activeTechnique = plan.techniques[activeIndex];
   const activeState = activeTechnique ? (states[activeTechnique.id]?.status ?? "todo") : "todo";
+  const activeCheckedCriteria = activeTechnique
+    ? (states[activeTechnique.id]?.checkedCriteria ?? [])
+    : [];
   const masteredCount = plan.techniques.filter(
     (technique) => states[technique.id]?.status === "mastered",
-  ).length;
-  const completedCount = plan.techniques.filter((technique) =>
-    ["mastered", "struck"].includes(states[technique.id]?.status ?? ""),
   ).length;
 
   useEffect(() => {
@@ -77,51 +67,6 @@ export function PlanDetailScreen({
     await onSetTechniqueStatus(activeTechnique.id, "mastered");
     setActiveIndex((currentIndex) => Math.min(currentIndex + 1, plan.techniques.length - 1));
   }, [activeTechnique, onSetTechniqueStatus, plan.techniques.length]);
-
-  const skipCurrentModule = useCallback(async () => {
-    if (!activeTechnique) {
-      return;
-    }
-
-    await onSetTechniqueStatus(activeTechnique.id, "struck");
-    setActiveIndex((currentIndex) => Math.min(currentIndex + 1, plan.techniques.length - 1));
-  }, [activeTechnique, onSetTechniqueStatus, plan.techniques.length]);
-
-  const panResponder = useMemo(
-    () =>
-      PanResponder.create({
-        onMoveShouldSetPanResponder: (_, gesture) =>
-          Math.abs(gesture.dx) > 12 && Math.abs(gesture.dx) > Math.abs(gesture.dy),
-        onPanResponderMove: Animated.event([null, { dx: position.x }], {
-          useNativeDriver: false,
-        }),
-        onPanResponderRelease: (_, gesture) => {
-          if (gesture.dx > 92) {
-            Animated.timing(position, {
-              duration: 160,
-              toValue: { x: 420, y: 0 },
-              useNativeDriver: false,
-            }).start(() => {
-              position.setValue({ x: 0, y: 0 });
-              void completeCurrentModule();
-            });
-            return;
-          }
-
-          Animated.spring(position, {
-            friction: 6,
-            toValue: { x: 0, y: 0 },
-            useNativeDriver: false,
-          }).start();
-        },
-      }),
-    [completeCurrentModule, position],
-  );
-
-  const cardRotation = position.x.interpolate({
-    inputRange: [-160, 0, 160],
-    outputRange: ["-5deg", "0deg", "5deg"],
-  });
 
   if (!activeTechnique) {
     return null;
@@ -155,70 +100,67 @@ export function PlanDetailScreen({
 
       <View style={styles.deckArea}>
         <Text style={styles.deckCounter}>
-          Card {activeIndex + 1} of {plan.techniques.length}
+          Module {activeIndex + 1} of {plan.techniques.length}
         </Text>
-        <Animated.View
-          {...panResponder.panHandlers}
-          style={[
-            styles.flashCard,
-            {
-              transform: [{ translateX: position.x }, { rotate: cardRotation }],
-            },
-          ]}
-        >
-          <ModuleFlashCard status={activeState} technique={activeTechnique} />
-        </Animated.View>
-        <Text style={styles.swipeHint}>Swipe right when this module is done</Text>
+        <View style={styles.flashCard}>
+          <ModuleFlashCard
+            checkedCriteria={activeCheckedCriteria}
+            onToggleCriterion={onToggleCriterion}
+            status={activeState}
+            technique={activeTechnique}
+          />
+        </View>
       </View>
 
       <View style={styles.actionsPanel}>
+        <Pressable
+          accessibilityRole="button"
+          disabled={activeState === "mastered"}
+          onPress={() => void completeCurrentModule()}
+          style={({ pressed }) => [
+            styles.primaryAction,
+            activeState === "mastered" ? styles.primaryActionDisabled : undefined,
+            pressed && activeState !== "mastered" ? styles.pressed : undefined,
+          ]}
+        >
+          <Check color={colors.text.inverse} size={18} strokeWidth={2.8} />
+          <Text style={styles.primaryActionText}>
+            {activeState === "mastered" ? "Practice completed" : "Mark practice complete"}
+          </Text>
+        </Pressable>
+
         <View style={styles.cardActions}>
-          <IconButton
+          <NavigationButton
             disabled={activeIndex === 0}
-            icon="previous"
-            label="Previous"
+            direction="previous"
+            label="Previous module"
             onPress={() => setActiveIndex((index) => Math.max(0, index - 1))}
           />
-          <IconButton
-            icon="start"
-            label={activeState === "in_progress" ? "Started" : "Start"}
-            onPress={() => void onSetTechniqueStatus(activeTechnique.id, "in_progress")}
-            tone="dark"
-          />
-          <IconButton
-            icon="done"
-            label="Done"
-            onPress={() => void completeCurrentModule()}
-            tone="dark"
-          />
-          <IconButton
+          <NavigationButton
             disabled={activeIndex === plan.techniques.length - 1}
-            icon="next"
-            label="Next"
+            direction="next"
+            label="Next module"
             onPress={() =>
               setActiveIndex((index) => Math.min(plan.techniques.length - 1, index + 1))
             }
           />
         </View>
-
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => void skipCurrentModule()}
-          style={({ pressed }) => [styles.skipButton, pressed ? styles.pressed : undefined]}
-        >
-          <SkipForward color={colors.text.brand} size={16} strokeWidth={2.5} />
-          <Text style={styles.skipButtonText}>Skip this module</Text>
-        </Pressable>
       </View>
-
-      <Text style={styles.completionText}>
-        {completedCount} of {plan.techniques.length} cards cleared
-      </Text>
     </ScrollView>
   );
 }
 
-function ModuleFlashCard({ status, technique }: { status: TechniqueStatus; technique: Technique }) {
+function ModuleFlashCard({
+  checkedCriteria,
+  onToggleCriterion,
+  status,
+  technique,
+}: {
+  checkedCriteria: string[];
+  onToggleCriterion: (criterionId: string) => Promise<void>;
+  status: TechniqueStatus;
+  technique: Technique;
+}) {
   return (
     <View style={styles.cardInner}>
       <View style={styles.statusPill}>
@@ -252,9 +194,38 @@ function ModuleFlashCard({ status, technique }: { status: TechniqueStatus; techn
 
       <View style={styles.masteryBox}>
         <Text style={styles.masteryLabel}>You are done when you can:</Text>
-        <Text numberOfLines={2} style={styles.masteryText}>
-          {technique.masteryCriteria[0]?.text ?? "repeat the drill with control"}
-        </Text>
+        <View style={styles.masteryList}>
+          {(technique.masteryCriteria.length > 0
+            ? technique.masteryCriteria
+            : [{ id: "fallback", text: "repeat the drill with control" }]
+          ).map((criterion) => (
+            <Pressable
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: checkedCriteria.includes(criterion.id) }}
+              disabled={criterion.id === "fallback"}
+              key={criterion.id}
+              onPress={() => void onToggleCriterion(criterion.id)}
+              style={({ pressed }) => [
+                styles.masteryItem,
+                pressed && criterion.id !== "fallback" ? styles.pressed : undefined,
+              ]}
+            >
+              <View
+                style={[
+                  styles.masteryCheckbox,
+                  checkedCriteria.includes(criterion.id)
+                    ? styles.masteryCheckboxChecked
+                    : undefined,
+                ]}
+              >
+                {checkedCriteria.includes(criterion.id) ? (
+                  <Check color={colors.text.inverse} size={13} strokeWidth={3} />
+                ) : null}
+              </View>
+              <Text style={styles.masteryText}>{criterion.text}</Text>
+            </Pressable>
+          ))}
+        </View>
       </View>
     </View>
   );
@@ -286,30 +257,18 @@ function FormatPill({
   );
 }
 
-function IconButton({
+function NavigationButton({
   disabled = false,
-  icon,
+  direction,
   label,
   onPress,
-  tone = "light",
 }: {
   disabled?: boolean;
-  icon: "done" | "next" | "previous" | "start";
+  direction: "next" | "previous";
   label: string;
   onPress: () => void;
-  tone?: "dark" | "light";
 }) {
-  const Icon =
-    icon === "previous"
-      ? ChevronLeft
-      : icon === "next"
-        ? ChevronRight
-        : icon === "done"
-          ? Check
-          : icon === "start"
-            ? Play
-            : RotateCcw;
-  const isDark = tone === "dark";
+  const Icon = direction === "previous" ? MoveLeft : MoveRight;
 
   return (
     <Pressable
@@ -318,16 +277,13 @@ function IconButton({
       disabled={disabled}
       onPress={onPress}
       style={({ pressed }) => [
-        styles.iconAction,
-        isDark ? styles.iconActionDark : styles.iconActionLight,
-        disabled ? styles.iconActionDisabled : undefined,
+        styles.navigationAction,
+        disabled ? styles.navigationActionDisabled : undefined,
         pressed && !disabled ? styles.pressed : undefined,
       ]}
     >
-      <Icon color={isDark ? colors.text.inverse : colors.text.brand} size={16} strokeWidth={2.5} />
-      <Text style={[styles.iconActionText, isDark ? styles.iconActionTextDark : undefined]}>
-        {label}
-      </Text>
+      <Icon color={colors.text.brand} size={16} strokeWidth={2.5} />
+      <Text style={styles.navigationActionText}>{label}</Text>
     </Pressable>
   );
 }
@@ -367,9 +323,8 @@ const styles = StyleSheet.create({
   },
   cardActions: {
     flexDirection: "row",
-    flexWrap: "wrap",
     gap: spacing.sm,
-    justifyContent: "center",
+    width: "100%",
   },
   cardInner: {
     gap: spacing.lg,
@@ -377,12 +332,6 @@ const styles = StyleSheet.create({
   },
   cardTitleStack: {
     gap: spacing.sm,
-  },
-  completionText: {
-    color: colors.text.tertiary,
-    fontSize: typography.labelMedium.fontSize,
-    fontWeight: "700",
-    textAlign: "center",
   },
   container: {
     backgroundColor: colors.surface.card,
@@ -436,7 +385,6 @@ const styles = StyleSheet.create({
     borderColor: colors.borders.default,
     borderRadius: 32,
     borderWidth: 1,
-    minHeight: 330,
     padding: spacing.panel,
     width: "100%",
   },
@@ -479,33 +427,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
   },
-  iconAction: {
-    alignItems: "center",
-    borderRadius: radius.pill,
-    flexDirection: "row",
-    gap: spacing.xs,
-    minHeight: 38,
-    paddingHorizontal: spacing.md,
-  },
-  iconActionDark: {
-    backgroundColor: colors.surface.inverse,
-  },
-  iconActionDisabled: {
-    opacity: 0.38,
-  },
-  iconActionLight: {
-    backgroundColor: colors.surface.successSoft,
-    borderColor: colors.borders.success,
-    borderWidth: 1,
-  },
-  iconActionText: {
-    color: colors.text.brand,
-    fontSize: typography.labelMedium.fontSize,
-    fontWeight: "800",
-  },
-  iconActionTextDark: {
-    color: colors.text.inverse,
-  },
   iconBadge: {
     alignItems: "center",
     backgroundColor: colors.surface.card,
@@ -528,9 +449,34 @@ const styles = StyleSheet.create({
     ...typography.overline,
     color: colors.text.tertiary,
   },
+  masteryList: {
+    gap: spacing.sm,
+  },
+  masteryItem: {
+    alignItems: "flex-start",
+    flexDirection: "row",
+    gap: spacing.sm,
+    minHeight: 28,
+  },
+  masteryCheckbox: {
+    alignItems: "center",
+    backgroundColor: colors.surface.card,
+    borderColor: colors.borders.default,
+    borderRadius: 7,
+    borderWidth: 1.5,
+    height: 22,
+    justifyContent: "center",
+    marginTop: 1,
+    width: 22,
+  },
+  masteryCheckboxChecked: {
+    backgroundColor: colors.action.primary,
+    borderColor: colors.action.primary,
+  },
   masteryText: {
     ...typography.bodyMedium,
     color: colors.text.primary,
+    flex: 1,
     fontWeight: "700",
   },
   moduleTitle: {
@@ -553,8 +499,48 @@ const styles = StyleSheet.create({
     borderColor: colors.borders.default,
     borderRadius: 28,
     borderWidth: 1,
+    gap: spacing.md,
+    padding: spacing.lg,
+  },
+  navigationAction: {
+    alignItems: "center",
+    backgroundColor: colors.surface.successSoft,
+    borderColor: colors.borders.success,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    flex: 1,
+    flexDirection: "row",
+    gap: spacing.xs,
+    justifyContent: "center",
+    minHeight: 44,
+    paddingHorizontal: spacing.md,
+  },
+  navigationActionDisabled: {
+    opacity: 0.38,
+  },
+  navigationActionText: {
+    color: colors.text.brand,
+    fontSize: typography.labelMedium.fontSize,
+    fontWeight: "900",
+  },
+  primaryAction: {
+    alignItems: "center",
+    backgroundColor: colors.surface.inverse,
+    borderRadius: radius.pill,
+    flexDirection: "row",
     gap: spacing.sm,
-    padding: spacing.md,
+    justifyContent: "center",
+    minHeight: 54,
+    paddingHorizontal: spacing.xl,
+    width: "100%",
+  },
+  primaryActionDisabled: {
+    opacity: 0.72,
+  },
+  primaryActionText: {
+    color: colors.text.inverse,
+    fontSize: typography.button.fontSize,
+    fontWeight: "900",
   },
   progressBadge: {
     alignItems: "center",
@@ -582,17 +568,14 @@ const styles = StyleSheet.create({
     height: sizes.progressHeight + 2,
     overflow: "hidden",
   },
-  skipButton: {
-    alignItems: "center",
-    alignSelf: "center",
-    flexDirection: "row",
-    gap: spacing.xs,
+  secondaryAction: {
     padding: spacing.sm,
   },
-  skipButtonText: {
-    color: colors.text.brand,
+  secondaryActionText: {
+    color: colors.text.tertiary,
     fontSize: typography.labelMedium.fontSize,
-    fontWeight: "800",
+    fontWeight: "900",
+    textAlign: "center",
   },
   statusPill: {
     alignSelf: "flex-start",
@@ -611,11 +594,6 @@ const styles = StyleSheet.create({
   subtitle: {
     ...typography.bodyMedium,
     color: colors.text.muted,
-  },
-  swipeHint: {
-    color: colors.text.tertiary,
-    fontSize: typography.labelMedium.fontSize,
-    fontWeight: "700",
   },
   title: {
     ...typography.displaySmall,

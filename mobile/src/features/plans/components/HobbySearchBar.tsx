@@ -9,18 +9,27 @@ import { spacing } from "../../../theme/spacing";
 import { typography } from "../../../theme/typography";
 
 interface HobbySearchBarProps {
+  canSubmit?: boolean;
   onChangeText: (value: string) => void;
   onSubmit: () => void;
+  submitLabel?: string;
   value: string;
 }
 
-export function HobbySearchBar({ onChangeText, onSubmit, value }: HobbySearchBarProps) {
-  const canSubmit = value.trim().length > 0;
+export function HobbySearchBar({
+  canSubmit,
+  onChangeText,
+  onSubmit,
+  submitLabel = "Go",
+  value,
+}: HobbySearchBarProps) {
+  const isSubmitEnabled = canSubmit ?? value.trim().length > 0;
 
   return (
     <View style={styles.searchShell}>
       <TextInput
         activeOutlineColor={colors.action.primary}
+        contentStyle={styles.searchInputContent}
         left={
           <TextInput.Icon
             icon={({ size }) => (
@@ -41,14 +50,15 @@ export function HobbySearchBar({ onChangeText, onSubmit, value }: HobbySearchBar
         value={value}
       />
       <Button
-        disabled={!canSubmit}
+        disabled={!isSubmitEnabled}
         labelStyle={styles.searchButtonLabel}
         mode="contained"
         onPress={onSubmit}
-        style={styles.searchButton}
+        style={[styles.searchButton, !isSubmitEnabled ? styles.searchButtonDisabled : undefined]}
+        textColor={colors.text.inverse}
         contentStyle={styles.searchButtonContent}
       >
-        Go
+        {submitLabel}
       </Button>
     </View>
   );
@@ -58,27 +68,39 @@ const styles = StyleSheet.create({
   searchShell: {
     alignItems: "center",
     flexDirection: "row",
-    gap: spacing.lg,
+    gap: spacing.md,
   },
   searchInput: {
     backgroundColor: colors.surface.input,
     flex: 1,
     fontSize: typography.bodyMedium.fontSize,
-    height: sizes.buttonHeight + 4,
+    height: sizes.buttonHeight,
     minWidth: 0,
+  },
+  searchInputContent: {
+    color: colors.text.primary,
+    fontSize: typography.bodyMedium.fontSize,
+    fontWeight: "700",
+    paddingLeft: 0,
   },
   searchInputOutline: {
     borderRadius: radius.pill,
+    borderWidth: 1.5,
   },
   searchButton: {
     backgroundColor: colors.surface.inverse,
     borderRadius: radius.pill,
   },
+  searchButtonDisabled: {
+    opacity: 0.48,
+  },
   searchButtonContent: {
-    minHeight: sizes.buttonHeight + 4,
-    paddingHorizontal: spacing.sm,
+    minHeight: sizes.buttonHeight,
+    paddingHorizontal: spacing.xs,
   },
   searchButtonLabel: {
     ...typography.button,
+    color: colors.text.inverse,
+    marginHorizontal: spacing.md,
   },
 });
