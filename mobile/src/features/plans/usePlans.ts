@@ -3,12 +3,19 @@ import {
   type GeneratePlanInput,
   type Plan,
   type ProgressSummary,
+  type TechniqueStatus,
   type TechniqueUserState,
 } from "@skillstep/shared";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { skillstepApi } from "../../api";
-import { getPlans, getTechniqueUserStates, savePlan } from "../../db";
+import {
+  getPlans,
+  getTechniqueUserStates,
+  saveCurrentPlanForHobby,
+  toggleMasteryCriterion,
+  updateTechniqueStatus,
+} from "../../db";
 
 export interface UsePlansResult {
   errorMessage: string | null;
@@ -17,10 +24,13 @@ export interface UsePlansResult {
   isLoading: boolean;
   plans: Plan[];
   progress: ProgressSummary | null;
+  progressByPlanId: Record<string, ProgressSummary>;
   refreshPlans: () => Promise<void>;
   selectedPlan: Plan | null;
   selectedPlanStates: Record<string, TechniqueUserState>;
   selectPlan: (planId: string) => void;
+  setTechniqueStatus: (techniqueId: string, status: TechniqueStatus) => Promise<void>;
+  toggleCriterion: (criterionId: string) => Promise<void>;
 }
 
 export function usePlans(): UsePlansResult {
@@ -29,6 +39,7 @@ export function usePlans(): UsePlansResult {
   const [selectedPlanStates, setSelectedPlanStates] = useState<Record<string, TechniqueUserState>>(
     {},
   );
+  const [progressByPlanId, setProgressByPlanId] = useState<Record<string, ProgressSummary>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -96,6 +107,38 @@ export function usePlans(): UsePlansResult {
     };
   }, [selectedPlan]);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadPlanProgress() {
+      try {
+        const progressEntries = await Promise.all(
+          plans.map(async (plan) => {
+            const states = await getTechniqueUserStates(plan.id);
+            return [plan.id, computeProgress(plan, states)] as const;
+          }),
+        );
+
+        if (isMounted) {
+          setProgressByPlanId(Object.fromEntries(progressEntries));
+        }
+      } catch (error) {
+        if (isMounted) setErrorMessage(toErrorMessage(error));
+      }
+    }
+
+    if (plans.length === 0) {
+      setProgressByPlanId({});
+      return;
+    }
+
+    loadPlanProgress();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [plans]);
+
   const generatePlan = useCallback(
     async (input: GeneratePlanInput) => {
       setIsGenerating(true);
@@ -103,7 +146,7 @@ export function usePlans(): UsePlansResult {
 
       try {
         const plan = await skillstepApi.plans.createPlan(input);
-        await savePlan(plan);
+        await saveCurrentPlanForHobby(plan);
         await refreshPlans();
         setSelectedPlanId(plan.id);
         return true;
@@ -122,6 +165,50 @@ export function usePlans(): UsePlansResult {
     [selectedPlan, selectedPlanStates],
   );
 
+  const refreshSelectedPlanProgress = useCallback(async () => {
+    if (!selectedPlan) {
+      setSelectedPlanStates({});
+      return;
+    }
+
+    const states = await getTechniqueUserStates(selectedPlan.id);
+    const nextProgress = computeProgress(selectedPlan, states);
+
+    setSelectedPlanStates(states);
+    setProgressByPlanId((currentProgress) => ({
+      ...currentProgress,
+      [selectedPlan.id]: nextProgress,
+    }));
+  }, [selectedPlan]);
+
+  const setTechniqueStatus = useCallback(
+    async (techniqueId: string, status: TechniqueStatus) => {
+      setErrorMessage(null);
+
+      try {
+        await updateTechniqueStatus(techniqueId, status);
+        await refreshSelectedPlanProgress();
+      } catch (error) {
+        setErrorMessage(toErrorMessage(error));
+      }
+    },
+    [refreshSelectedPlanProgress],
+  );
+
+  const toggleCriterion = useCallback(
+    async (criterionId: string) => {
+      setErrorMessage(null);
+
+      try {
+        await toggleMasteryCriterion(criterionId);
+        await refreshSelectedPlanProgress();
+      } catch (error) {
+        setErrorMessage(toErrorMessage(error));
+      }
+    },
+    [refreshSelectedPlanProgress],
+  );
+
   return {
     errorMessage,
     generatePlan,
@@ -129,10 +216,13 @@ export function usePlans(): UsePlansResult {
     isLoading,
     plans,
     progress,
+    progressByPlanId,
     refreshPlans,
     selectedPlan,
     selectedPlanStates,
     selectPlan: setSelectedPlanId,
+    setTechniqueStatus,
+    toggleCriterion,
   };
 }
 

@@ -5,6 +5,7 @@ export {
   getPlanById,
   getPlans,
   getTechniqueUserStates,
+  saveCurrentPlanForHobby,
   savePlan,
   toggleMasteryCriterion,
   updateTechniqueStatus,

@@ -37,4 +37,64 @@ export const DEFAULT_HOBBIES: DefaultHobby[] = [
     icon: "art",
     name: "Drawing",
   },
+  {
+    description: "Bluff timing, pot odds, bankroll discipline, and review.",
+    icon: "cards",
+    name: "Poker",
+  },
+  {
+    description: "Vocabulary, pronunciation, listening, and daily speaking.",
+    icon: "book",
+    name: "Language learning",
+  },
+  {
+    description: "Breath control, tone, pitch, and confident song practice.",
+    icon: "guitar",
+    name: "Singing",
+  },
+  {
+    description: "Short-form ideas, editing rhythm, lighting, and consistency.",
+    icon: "camera",
+    name: "Content creation",
+  },
+  {
+    description: "Posture, flexibility, balance, and calm repeatable sessions.",
+    icon: "fitness",
+    name: "Yoga",
+  },
+  {
+    description: "Creative prompts, structure, revision, and finished pieces.",
+    icon: "book",
+    name: "Creative writing",
+  },
+  {
+    description: "Beat, coordination, musicality, and short choreography.",
+    icon: "fitness",
+    name: "Dance",
+  },
+  {
+    description: "Plant care, soil, watering rhythm, and seasonal routines.",
+    icon: "sparkles",
+    name: "Gardening",
+  },
+  {
+    description: "Brewing variables, tasting notes, recipes, and consistency.",
+    icon: "cooking",
+    name: "Coffee brewing",
+  },
+  {
+    description: "Composition, color, lettering, and reusable design taste.",
+    icon: "art",
+    name: "Graphic design",
+  },
+  {
+    description: "Openings, movement, serve rhythm, and match confidence.",
+    icon: "fitness",
+    name: "Tennis",
+  },
+  {
+    description: "Observation, editing, storytelling, and stronger visual taste.",
+    icon: "camera",
+    name: "Videography",
+  },
 ];

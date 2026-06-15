@@ -39,7 +39,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: colors.surface.card,
     borderColor: colors.borders.selected,
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     borderWidth: 1,
     flexDirection: "row",
     gap: 7,
@@ -47,8 +47,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
   },
   planChipSelected: {
-    backgroundColor: colors.action.primary,
-    borderColor: colors.action.primary,
+    backgroundColor: colors.surface.inverse,
+    borderColor: colors.surface.inverse,
   },
   planChipText: {
     ...typography.labelMedium,

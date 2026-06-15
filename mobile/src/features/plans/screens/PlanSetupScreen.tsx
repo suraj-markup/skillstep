@@ -1,7 +1,8 @@
 import type { GeneratePlanInput } from "@skillstep/shared";
-import { Sparkles } from "lucide-react-native";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
-import { Button, TextInput } from "react-native-paper";
+import { StatusBar } from "expo-status-bar";
+import { ArrowLeft, Sparkles } from "lucide-react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, TextInput } from "react-native-paper";
 
 import { colors } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
@@ -36,13 +37,22 @@ export function PlanSetupScreen({
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      <StatusBar style="dark" />
+      <Pressable accessibilityRole="button" hitSlop={12} onPress={onBack} style={styles.headerBack}>
+        <ArrowLeft color={colors.text.primary} size={19} strokeWidth={2.6} />
+        <Text style={styles.headerBackText}>Back</Text>
+      </Pressable>
+
       <View style={styles.header}>
+        <Sparkles
+          color={colors.surface.card}
+          size={56}
+          strokeWidth={1.8}
+          style={styles.headerSparkle}
+        />
         <Text style={styles.eyebrow}>Plan setup</Text>
         <Text style={styles.title}>{hobby}</Text>
-        <Text style={styles.subtitle}>
-          Now tell Skillstep the level jump you want. The AI needs this context before it can build
-          a useful plan.
-        </Text>
+        <Text style={styles.subtitle}>Now tell Skillstep the level jump you want.</Text>
       </View>
 
       {errorMessage ? <SetupError message={errorMessage} /> : null}
@@ -72,29 +82,29 @@ export function PlanSetupScreen({
       </View>
 
       <View style={styles.setupActions}>
-        <Button
-          disabled={isGenerating}
-          labelStyle={styles.secondaryActionLabel}
-          mode="outlined"
-          onPress={onBack}
-          style={styles.secondaryActionButton}
-          contentStyle={styles.actionButtonContent}
-        >
-          Back
-        </Button>
+        <Pressable
+          accessibilityState={{ disabled: !canSubmit || isGenerating }}
+          accessibilityRole="button"
+          onPress={() => {
+            if (!canSubmit || isGenerating) {
+              return;
+            }
 
-        <Button
-          disabled={!canSubmit || isGenerating}
-          icon={({ color, size }) => <Sparkles color={color} size={size} strokeWidth={2.5} />}
-          labelStyle={styles.primaryActionLabel}
-          loading={isGenerating}
-          mode="contained"
-          onPress={handleSubmit}
-          style={styles.primaryActionButton}
-          contentStyle={styles.actionButtonContent}
+            void handleSubmit();
+          }}
+          style={({ pressed }) => [
+            styles.primaryActionButton,
+            !canSubmit || isGenerating ? styles.primaryActionButtonDisabled : undefined,
+            pressed && canSubmit && !isGenerating ? styles.primaryActionButtonPressed : undefined,
+          ]}
         >
-          Generate plan
-        </Button>
+          {isGenerating ? (
+            <ActivityIndicator color={colors.text.inverse} size={18} />
+          ) : (
+            <Sparkles color={colors.text.inverse} size={20} strokeWidth={2.5} />
+          )}
+          <Text style={styles.primaryActionLabel}>Generate plan</Text>
+        </Pressable>
       </View>
     </ScrollView>
   );
@@ -139,7 +149,7 @@ function SetupField({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.surface.app,
+    backgroundColor: colors.surface.card,
     flexGrow: 1,
     gap: 20,
     justifyContent: "flex-start",
@@ -148,8 +158,45 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.screenBottom,
     paddingTop: spacing.plansTop,
   },
+  headerBack: {
+    alignItems: "center",
+    alignSelf: "flex-start",
+    backgroundColor: colors.surface.card,
+    borderColor: colors.borders.default,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: spacing.sm,
+    minHeight: 42,
+    paddingHorizontal: spacing.xl,
+  },
+  headerBackText: {
+    ...typography.labelLarge,
+    color: colors.text.primary,
+  },
   header: {
+    backgroundColor: colors.surface.successSoft,
+    borderRadius: 36,
     gap: spacing.xl,
+    overflow: "hidden",
+    padding: spacing.panel + 2,
+    position: "relative",
+  },
+  headerGlow: {
+    backgroundColor: colors.surface.card,
+    borderRadius: 80,
+    height: 150,
+    opacity: 0.44,
+    position: "absolute",
+    right: -58,
+    top: -54,
+    transform: [{ rotate: "-12deg" }],
+    width: 190,
+  },
+  headerSparkle: {
+    position: "absolute",
+    right: 22,
+    top: 24,
   },
   eyebrow: {
     color: colors.text.accent,
@@ -186,7 +233,7 @@ const styles = StyleSheet.create({
   setupPanel: {
     backgroundColor: colors.surface.card,
     borderColor: colors.borders.default,
-    borderRadius: radius.md,
+    borderRadius: 28,
     borderWidth: 1,
     gap: spacing.xxxl,
     padding: spacing.panel,
@@ -202,38 +249,38 @@ const styles = StyleSheet.create({
   setupInput: {
     backgroundColor: colors.surface.input,
     fontSize: typography.bodyMedium.fontSize,
-    minHeight: sizes.buttonHeight,
+    minHeight: sizes.buttonHeight + 4,
   },
   setupInputOutline: {
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
   },
   setupInputMultiline: {
     minHeight: 112,
     textAlignVertical: "top",
   },
   setupActions: {
-    flexDirection: "row",
     gap: spacing.lg,
   },
-  secondaryActionButton: {
-    backgroundColor: colors.surface.card,
-    borderColor: colors.borders.default,
-    borderRadius: radius.md,
-    flex: 1,
-  },
-  actionButtonContent: {
-    minHeight: sizes.buttonHeight,
-  },
-  secondaryActionLabel: {
-    ...typography.button,
-  },
   primaryActionButton: {
-    backgroundColor: colors.action.primary,
-    borderRadius: radius.md,
-    flex: 1,
+    alignItems: "center",
+    backgroundColor: colors.surface.inverse,
+    borderRadius: radius.pill,
+    flexDirection: "row",
+    gap: spacing.lg,
+    justifyContent: "center",
+    minHeight: sizes.buttonHeight + 6,
+    paddingHorizontal: spacing.panel,
+  },
+  primaryActionButtonDisabled: {
+    opacity: 0.48,
+  },
+  primaryActionButtonPressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.99 }],
   },
   primaryActionLabel: {
     ...typography.button,
+    color: colors.text.inverse,
   },
 });
 

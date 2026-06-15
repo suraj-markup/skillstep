@@ -5,6 +5,7 @@ import {
   TechniqueStatusSchema,
   type TechniqueUserState,
 } from "@skillstep/shared";
+import type { SQLiteDatabase } from "expo-sqlite";
 
 import { getDatabase } from "./database";
 import { TABLES } from "./schema";
@@ -56,144 +57,180 @@ type CheckedAtRow = {
 export async function savePlan(plan: Plan): Promise<void> {
   const validPlan = PlanSchema.parse(plan);
   const database = await getDatabase();
-  const now = new Date().toISOString();
 
   await database.withTransactionAsync(async () => {
-    const techniqueIds = validPlan.techniques.map((technique) => technique.id);
+    await writePlan(database, validPlan);
+  });
+}
 
+export async function saveCurrentPlanForHobby(plan: Plan): Promise<void> {
+  const validPlan = PlanSchema.parse(plan);
+  const database = await getDatabase();
+
+  await database.withTransactionAsync(async () => {
+    const planRows = await database.getAllAsync<Pick<PlanRow, "id" | "hobby">>(
+      `
+      SELECT id, hobby
+      FROM ${TABLES.plans}
+      WHERE id != ?;
+      `,
+      [validPlan.id],
+    );
+    const currentHobbyKey = normalizeHobbyKey(validPlan.hobby);
+    const stalePlanIds = planRows
+      .filter((planRow) => normalizeHobbyKey(planRow.hobby) === currentHobbyKey)
+      .map((planRow) => planRow.id);
+
+    if (stalePlanIds.length > 0) {
+      await database.runAsync(
+        `
+        DELETE FROM ${TABLES.plans}
+        WHERE id IN (${createPlaceholders(stalePlanIds.length)});
+        `,
+        stalePlanIds,
+      );
+    }
+
+    await writePlan(database, validPlan);
+  });
+}
+
+async function writePlan(database: SQLiteDatabase, validPlan: Plan): Promise<void> {
+  const now = new Date().toISOString();
+  const techniqueIds = validPlan.techniques.map((technique) => technique.id);
+
+  await database.runAsync(
+    `
+    INSERT INTO ${TABLES.plans} (
+      id,
+      hobby,
+      level_from,
+      level_to,
+      weekly_hours,
+      rationale,
+      icon,
+      accent,
+      created_at
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(id) DO UPDATE SET
+      hobby = excluded.hobby,
+      level_from = excluded.level_from,
+      level_to = excluded.level_to,
+      weekly_hours = excluded.weekly_hours,
+      rationale = excluded.rationale,
+      icon = excluded.icon,
+      accent = excluded.accent,
+      created_at = excluded.created_at;
+    `,
+    [
+      validPlan.id,
+      validPlan.hobby,
+      validPlan.levelFrom,
+      validPlan.levelTo,
+      validPlan.weeklyHours,
+      validPlan.rationale,
+      validPlan.icon,
+      validPlan.accent,
+      validPlan.createdAt,
+    ],
+  );
+
+  await database.runAsync(
+    `
+    DELETE FROM ${TABLES.techniques}
+    WHERE plan_id = ?
+      AND id NOT IN (${createPlaceholders(techniqueIds.length)});
+    `,
+    [validPlan.id, ...techniqueIds],
+  );
+
+  for (const [techniqueIndex, technique] of validPlan.techniques.entries()) {
     await database.runAsync(
       `
-      INSERT INTO ${TABLES.plans} (
+      INSERT INTO ${TABLES.techniques} (
         id,
-        hobby,
-        level_from,
-        level_to,
-        weekly_hours,
-        rationale,
-        icon,
-        accent,
-        created_at
+        plan_id,
+        name,
+        why_it_matters,
+        modality_video,
+        modality_reading,
+        modality_practice,
+        drill_text,
+        minutes_per_session,
+        sessions_per_week,
+        sort_order
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
-        hobby = excluded.hobby,
-        level_from = excluded.level_from,
-        level_to = excluded.level_to,
-        weekly_hours = excluded.weekly_hours,
-        rationale = excluded.rationale,
-        icon = excluded.icon,
-        accent = excluded.accent,
-        created_at = excluded.created_at;
+        plan_id = excluded.plan_id,
+        name = excluded.name,
+        why_it_matters = excluded.why_it_matters,
+        modality_video = excluded.modality_video,
+        modality_reading = excluded.modality_reading,
+        modality_practice = excluded.modality_practice,
+        drill_text = excluded.drill_text,
+        minutes_per_session = excluded.minutes_per_session,
+        sessions_per_week = excluded.sessions_per_week,
+        sort_order = excluded.sort_order;
       `,
       [
+        technique.id,
         validPlan.id,
-        validPlan.hobby,
-        validPlan.levelFrom,
-        validPlan.levelTo,
-        validPlan.weeklyHours,
-        validPlan.rationale,
-        validPlan.icon,
-        validPlan.accent,
-        validPlan.createdAt,
+        technique.name,
+        technique.whyItMatters,
+        technique.modalityProfile.video,
+        technique.modalityProfile.reading,
+        technique.modalityProfile.practice,
+        technique.drill.text,
+        technique.drill.minutesPerSession,
+        technique.drill.sessionsPerWeek,
+        techniqueIndex,
       ],
     );
 
     await database.runAsync(
       `
-      DELETE FROM ${TABLES.techniques}
-      WHERE plan_id = ?
-        AND id NOT IN (${createPlaceholders(techniqueIds.length)});
+      INSERT OR IGNORE INTO ${TABLES.techniqueStates} (
+        technique_id,
+        status,
+        updated_at
+      )
+      VALUES (?, ?, ?);
       `,
-      [validPlan.id, ...techniqueIds],
+      [technique.id, "todo", now],
     );
 
-    for (const [techniqueIndex, technique] of validPlan.techniques.entries()) {
+    const criterionIds = technique.masteryCriteria.map((criterion) => criterion.id);
+
+    await database.runAsync(
+      `
+      DELETE FROM ${TABLES.masteryCriteria}
+      WHERE technique_id = ?
+        AND id NOT IN (${createPlaceholders(criterionIds.length)});
+      `,
+      [technique.id, ...criterionIds],
+    );
+
+    for (const [criterionIndex, criterion] of technique.masteryCriteria.entries()) {
       await database.runAsync(
         `
-        INSERT INTO ${TABLES.techniques} (
+        INSERT INTO ${TABLES.masteryCriteria} (
           id,
-          plan_id,
-          name,
-          why_it_matters,
-          modality_video,
-          modality_reading,
-          modality_practice,
-          drill_text,
-          minutes_per_session,
-          sessions_per_week,
+          technique_id,
+          text,
           sort_order
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET
-          plan_id = excluded.plan_id,
-          name = excluded.name,
-          why_it_matters = excluded.why_it_matters,
-          modality_video = excluded.modality_video,
-          modality_reading = excluded.modality_reading,
-          modality_practice = excluded.modality_practice,
-          drill_text = excluded.drill_text,
-          minutes_per_session = excluded.minutes_per_session,
-          sessions_per_week = excluded.sessions_per_week,
+          technique_id = excluded.technique_id,
+          text = excluded.text,
           sort_order = excluded.sort_order;
         `,
-        [
-          technique.id,
-          validPlan.id,
-          technique.name,
-          technique.whyItMatters,
-          technique.modalityProfile.video,
-          technique.modalityProfile.reading,
-          technique.modalityProfile.practice,
-          technique.drill.text,
-          technique.drill.minutesPerSession,
-          technique.drill.sessionsPerWeek,
-          techniqueIndex,
-        ],
+        [criterion.id, technique.id, criterion.text, criterionIndex],
       );
-
-      await database.runAsync(
-        `
-        INSERT OR IGNORE INTO ${TABLES.techniqueStates} (
-          technique_id,
-          status,
-          updated_at
-        )
-        VALUES (?, ?, ?);
-        `,
-        [technique.id, "todo", now],
-      );
-
-      const criterionIds = technique.masteryCriteria.map((criterion) => criterion.id);
-
-      await database.runAsync(
-        `
-        DELETE FROM ${TABLES.masteryCriteria}
-        WHERE technique_id = ?
-          AND id NOT IN (${createPlaceholders(criterionIds.length)});
-        `,
-        [technique.id, ...criterionIds],
-      );
-
-      for (const [criterionIndex, criterion] of technique.masteryCriteria.entries()) {
-        await database.runAsync(
-          `
-          INSERT INTO ${TABLES.masteryCriteria} (
-            id,
-            technique_id,
-            text,
-            sort_order
-          )
-          VALUES (?, ?, ?, ?)
-          ON CONFLICT(id) DO UPDATE SET
-            technique_id = excluded.technique_id,
-            text = excluded.text,
-            sort_order = excluded.sort_order;
-          `,
-          [criterion.id, technique.id, criterion.text, criterionIndex],
-        );
-      }
     }
-  });
+  }
 }
 
 export async function getPlans(): Promise<Plan[]> {
@@ -317,6 +354,10 @@ export async function updateTechniqueStatus(
 
 function createPlaceholders(count: number): string {
   return Array.from({ length: count }, () => "?").join(", ");
+}
+
+function normalizeHobbyKey(value: string): string {
+  return value.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
 export async function toggleMasteryCriterion(criterionId: string): Promise<boolean> {

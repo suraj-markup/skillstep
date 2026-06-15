@@ -1,4 +1,5 @@
 import type { Plan } from "@skillstep/shared";
+import { Clock3, ListChecks, Target } from "lucide-react-native";
 import { StyleSheet, Text, View } from "react-native";
 
 import { colors } from "../../../theme/colors";
@@ -15,40 +16,55 @@ interface PlanCardProps {
 
 export function PlanCard({ plan, progressPercent }: PlanCardProps) {
   const Icon = planIcons[plan.icon];
+  const nextTechnique = plan.techniques[0];
 
   return (
     <View style={styles.card}>
-      <Text style={styles.cardLabel}>Current plan</Text>
       <View style={styles.cardTitleRow}>
         <View style={styles.iconBadge}>
           <Icon color={colors.action.primary} size={24} strokeWidth={2.4} />
         </View>
         <View style={styles.cardTitleStack}>
+          <Text style={styles.cardLabel}>Current plan</Text>
           <Text style={styles.cardTitle}>{plan.hobby}</Text>
-          <Text style={styles.cardMeta}>
-            {plan.techniques.length} techniques - {progressPercent}% mastered
-          </Text>
+          <Text style={styles.cardMeta}>{progressPercent}% mastered</Text>
         </View>
       </View>
-      <Text style={styles.cardText}>{plan.rationale}</Text>
 
       <View style={styles.progressTrack}>
         <View style={[styles.progressFill, { width: `${progressPercent}%` }]} />
       </View>
 
-      <View style={styles.techniqueList}>
-        {plan.techniques.map((technique, index) => (
-          <View key={technique.id} style={styles.techniqueRow}>
-            <Text style={styles.techniqueNumber}>{index + 1}</Text>
-            <View style={styles.techniqueTextStack}>
-              <Text style={styles.techniqueName}>{technique.name}</Text>
-              <Text style={styles.techniqueMeta}>
-                {technique.drill.minutesPerSession} min - {technique.drill.sessionsPerWeek}x/week
-              </Text>
-            </View>
+      {nextTechnique ? (
+        <View style={styles.nextFocusPanel}>
+          <View style={styles.nextFocusIcon}>
+            <Target color={colors.text.inverse} size={18} strokeWidth={2.5} />
           </View>
-        ))}
+          <View style={styles.nextFocusTextStack}>
+            <Text style={styles.nextFocusLabel}>Next focus</Text>
+            <Text numberOfLines={2} style={styles.nextFocusTitle}>
+              {nextTechnique.name}
+            </Text>
+          </View>
+        </View>
+      ) : null}
+
+      <View style={styles.snapshotRow}>
+        <View style={styles.snapshotPill}>
+          <ListChecks color={colors.text.brand} size={16} strokeWidth={2.4} />
+          <Text style={styles.snapshotText}>{plan.techniques.length} skills</Text>
+        </View>
+        {nextTechnique ? (
+          <View style={styles.snapshotPill}>
+            <Clock3 color={colors.text.brand} size={16} strokeWidth={2.4} />
+            <Text style={styles.snapshotText}>{nextTechnique.drill.minutesPerSession} min</Text>
+          </View>
+        ) : null}
       </View>
+
+      <Text numberOfLines={2} style={styles.cardText}>
+        {plan.rationale}
+      </Text>
     </View>
   );
 }
@@ -57,10 +73,10 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.surface.card,
     borderColor: colors.borders.default,
-    borderRadius: radius.md,
+    borderRadius: 28,
     borderWidth: 1,
     gap: spacing.xl,
-    padding: spacing.panel,
+    padding: spacing.panel + 2,
   },
   cardLabel: {
     color: colors.text.tertiary,
@@ -78,7 +94,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: colors.surface.successSoft,
     borderColor: colors.borders.success,
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     borderWidth: 1,
     height: sizes.iconBadge,
     justifyContent: "center",
@@ -105,7 +121,7 @@ const styles = StyleSheet.create({
   progressTrack: {
     backgroundColor: colors.surface.progressTrack,
     borderRadius: radius.pill,
-    height: sizes.progressHeight,
+    height: sizes.progressHeight + 2,
     overflow: "hidden",
   },
   progressFill: {
@@ -113,40 +129,55 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     height: "100%",
   },
-  techniqueList: {
-    borderTopColor: colors.borders.divider,
-    borderTopWidth: 1,
-    gap: spacing.lg,
-    paddingTop: spacing.xs,
-  },
-  techniqueRow: {
+  nextFocusPanel: {
     alignItems: "center",
+    backgroundColor: colors.surface.inverse,
+    borderRadius: radius.lg,
     flexDirection: "row",
-    gap: spacing.xl,
-    minHeight: 48,
+    gap: spacing.lg,
+    padding: spacing.xl,
   },
-  techniqueNumber: {
-    backgroundColor: colors.surface.techniqueBadge,
-    borderRadius: radius.md,
-    color: colors.text.tertiary,
-    fontSize: typography.labelMedium.fontSize,
-    fontWeight: "800",
-    overflow: "hidden",
-    paddingVertical: spacing.sm,
-    textAlign: "center",
-    width: sizes.techniqueIndex,
+  nextFocusIcon: {
+    alignItems: "center",
+    backgroundColor: colors.action.primary,
+    borderRadius: radius.pill,
+    height: 36,
+    justifyContent: "center",
+    width: 36,
   },
-  techniqueTextStack: {
+  nextFocusTextStack: {
     flex: 1,
     gap: spacing.xxs,
   },
-  techniqueName: {
-    ...typography.button,
-    color: colors.text.primary,
+  nextFocusLabel: {
+    ...typography.overline,
+    color: colors.track,
   },
-  techniqueMeta: {
-    color: colors.techniqueMeta,
+  nextFocusTitle: {
+    color: colors.text.inverse,
+    fontSize: typography.bodyLarge.fontSize,
+    fontWeight: "800",
+    lineHeight: 22,
+  },
+  snapshotRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.md,
+  },
+  snapshotPill: {
+    alignItems: "center",
+    backgroundColor: colors.surface.successSoft,
+    borderColor: colors.borders.success,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+  },
+  snapshotText: {
+    color: colors.text.brand,
     fontSize: typography.labelMedium.fontSize,
-    fontWeight: "600",
+    fontWeight: "800",
   },
 });

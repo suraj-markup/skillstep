@@ -26,7 +26,7 @@ export function createApp(dependencies: AppDependencies = {}) {
     cors({
       allowHeaders: ["content-type"],
       allowMethods: ["GET", "POST", "OPTIONS"],
-      origin: ["http://localhost:8081", "http://127.0.0.1:8081"],
+      origin: (origin) => (isAllowedDevOrigin(origin) ? origin : null),
     }),
   );
 
@@ -37,3 +37,19 @@ export function createApp(dependencies: AppDependencies = {}) {
 }
 
 export const app = createApp();
+
+function isAllowedDevOrigin(origin: string) {
+  try {
+    const url = new URL(origin);
+    const isHttp = url.protocol === "http:";
+    const isLocalhost = url.hostname === "localhost" || url.hostname === "127.0.0.1";
+    const isPrivateLanHost =
+      url.hostname.startsWith("192.168.") ||
+      url.hostname.startsWith("10.") ||
+      /^172\.(1[6-9]|2\d|3[0-1])\./.test(url.hostname);
+
+    return isHttp && (isLocalhost || isPrivateLanHost);
+  } catch {
+    return false;
+  }
+}

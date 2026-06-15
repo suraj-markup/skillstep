@@ -5,6 +5,7 @@
   "dependencies": {
     "@skillstep/shared": "*",
     "expo": "~56.0.11",
+    "expo-constants": "~56.0.18",
     "expo-sqlite": "~56.0.5",
     "expo-status-bar": "~56.0.4",
     "lucide-react-native": "^1.18.0",

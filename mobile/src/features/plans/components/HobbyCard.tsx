@@ -9,24 +9,103 @@ import { typography } from "../../../theme/typography";
 import { planIcons } from "../planIcons";
 
 interface HobbyCardProps {
+  cardWidth?: number;
+  completedModules?: number;
   description: string;
   icon: PlanIcon;
+  moduleCount?: number;
   name: string;
   onPress: () => void;
+  progressPercent?: number;
+  variant?: "grid" | "rail";
 }
 
-export function HobbyCard({ description, icon, name, onPress }: HobbyCardProps) {
+type HobbyTone = keyof typeof colors.hobby;
+
+const HOBBY_ICON_TONES: Partial<Record<PlanIcon, HobbyTone>> = {
+  art: "rose",
+  camera: "sky",
+  cooking: "clay",
+  fitness: "sage",
+  guitar: "sun",
+  sparkles: "sky",
+  strategy: "sage",
+};
+
+const FEATURED_HOBBY_TONES: Record<string, HobbyTone> = {
+  chess: "sage",
+  cooking: "sun",
+  cycling: "sage",
+  drawing: "rose",
+  fitness: "sage",
+  guitar: "sun",
+  photography: "sky",
+  running: "rose",
+  yoga: "sage",
+};
+
+export function HobbyCard({
+  cardWidth,
+  completedModules,
+  description,
+  icon,
+  moduleCount,
+  name,
+  onPress,
+  progressPercent,
+  variant = "grid",
+}: HobbyCardProps) {
   const Icon = planIcons[icon];
+  const toneKey = HOBBY_ICON_TONES[icon] ?? "sage";
+  const featuredToneKey = FEATURED_HOBBY_TONES[name.toLowerCase()];
+  const tone = colors.hobby[featuredToneKey ?? toneKey];
+  const isFeatured = Boolean(featuredToneKey);
+  const hasPlan = progressPercent !== undefined;
+  const shouldShowModules = hasPlan && moduleCount !== undefined && completedModules !== undefined;
 
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={styles.hobbyCard}>
-      <View style={styles.iconBadge}>
-        <Icon color={colors.action.primary} size={22} strokeWidth={2.4} />
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={
+        hasPlan
+          ? `${name}. ${progressPercent}% complete. ${description}`
+          : `${name}. ${description}`
+      }
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.hobbyCard,
+        variant === "rail" ? styles.hobbyCardRail : styles.hobbyCardGrid,
+        cardWidth ? { width: cardWidth } : undefined,
+        {
+          backgroundColor: isFeatured ? tone.surface : colors.surface.card,
+          borderColor: isFeatured ? tone.border : colors.borders.divider,
+        },
+        pressed ? styles.hobbyCardPressed : undefined,
+      ]}
+    >
+      <View
+        style={[
+          styles.iconBadge,
+          { backgroundColor: isFeatured ? colors.surface.card : tone.surface },
+        ]}
+      >
+        <Icon color={isFeatured ? colors.surface.inverse : tone.icon} size={20} strokeWidth={2.5} />
       </View>
-      <View style={styles.hobbyCardTextStack}>
-        <Text style={styles.hobbyCardTitle}>{name}</Text>
-        <Text style={styles.hobbyCardDescription}>{description}</Text>
-      </View>
+      <Text numberOfLines={2} style={styles.hobbyCardTitle}>
+        {name}
+      </Text>
+      {hasPlan ? (
+        <View style={styles.progressStack}>
+          <View style={styles.progressTrack}>
+            <View style={[styles.progressFill, { width: `${progressPercent}%` }]} />
+          </View>
+          <Text style={styles.progressText}>
+            {shouldShowModules
+              ? `${completedModules}/${moduleCount} modules`
+              : `${progressPercent}%`}
+          </Text>
+        </View>
+      ) : null}
     </Pressable>
   );
 }
@@ -34,37 +113,60 @@ export function HobbyCard({ description, icon, name, onPress }: HobbyCardProps) 
 const styles = StyleSheet.create({
   hobbyCard: {
     alignItems: "center",
-    backgroundColor: colors.surface.card,
-    borderColor: colors.borders.default,
-    borderRadius: radius.md,
+    aspectRatio: 1,
+    borderRadius: radius.lg,
     borderWidth: 1,
-    flexDirection: "row",
-    gap: spacing.xl,
-    minHeight: 88,
-    padding: spacing.xxl,
+    gap: spacing.md,
+    justifyContent: "center",
+    minHeight: 104,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.lg,
+  },
+  hobbyCardGrid: {
+    flexBasis: "30.5%",
+    flexGrow: 1,
+  },
+  hobbyCardRail: {
+    flexGrow: 0,
+  },
+  hobbyCardPressed: {
+    opacity: 0.86,
+    transform: [{ scale: 0.98 }],
   },
   iconBadge: {
     alignItems: "center",
-    backgroundColor: colors.surface.successSoft,
-    borderColor: colors.borders.success,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    height: sizes.iconBadge,
+    borderRadius: radius.pill,
+    height: sizes.iconBadge - 4,
     justifyContent: "center",
-    width: sizes.iconBadge,
-  },
-  hobbyCardTextStack: {
-    flex: 1,
-    gap: spacing.xs,
+    width: sizes.iconBadge - 4,
   },
   hobbyCardTitle: {
-    ...typography.bodyLarge,
+    ...typography.labelMedium,
     color: colors.text.primary,
     fontWeight: "800",
+    lineHeight: 18,
+    textAlign: "center",
   },
-  hobbyCardDescription: {
-    ...typography.bodyMedium,
-    color: colors.text.muted,
-    fontSize: typography.labelMedium.fontSize,
+  progressStack: {
+    alignSelf: "stretch",
+    gap: spacing.xs,
+  },
+  progressTrack: {
+    backgroundColor: colors.surface.progressTrack,
+    borderRadius: radius.pill,
+    height: 5,
+    overflow: "hidden",
+  },
+  progressFill: {
+    backgroundColor: colors.surface.inverse,
+    borderRadius: radius.pill,
+    height: "100%",
+  },
+  progressText: {
+    color: colors.text.primary,
+    fontSize: 11,
+    fontWeight: "800",
+    lineHeight: 13,
+    textAlign: "center",
   },
 });

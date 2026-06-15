@@ -61,21 +61,21 @@ const styles = StyleSheet.create({
     gap: spacing.lg,
   },
   searchInput: {
-    backgroundColor: colors.surface.card,
+    backgroundColor: colors.surface.input,
     flex: 1,
     fontSize: typography.bodyMedium.fontSize,
-    height: sizes.buttonHeight,
+    height: sizes.buttonHeight + 4,
     minWidth: 0,
   },
   searchInputOutline: {
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
   },
   searchButton: {
-    backgroundColor: colors.action.primary,
-    borderRadius: radius.md,
+    backgroundColor: colors.surface.inverse,
+    borderRadius: radius.pill,
   },
   searchButtonContent: {
-    minHeight: sizes.buttonHeight,
+    minHeight: sizes.buttonHeight + 4,
     paddingHorizontal: spacing.sm,
   },
   searchButtonLabel: {
