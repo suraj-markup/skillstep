@@ -4,9 +4,11 @@ export { runMigrations } from "./migrations";
 export {
   getPlanById,
   getPlans,
+  getTechniqueContent,
   getTechniqueUserStates,
   saveCurrentPlanForHobby,
   savePlan,
+  saveTechniqueContent,
   toggleMasteryCriterion,
   updateTechniqueStatus,
 } from "./planRepository";

@@ -1,51 +1,110 @@
-import type { Plan, Technique, TechniqueStatus, TechniqueUserState } from "@skillstep/shared";
-import {
-  ArrowLeft,
-  BookOpen,
-  Check,
-  Clock3,
-  Dumbbell,
-  MoveLeft,
-  MoveRight,
-  Video,
-} from "lucide-react-native";
+import type {
+  Plan,
+  ResolveTechniqueContentInput,
+  Technique,
+  TechniqueContent,
+  TechniqueStatus,
+  TechniqueUserState,
+  VideoResource,
+} from "@skillstep/shared";
+import { isPlanComplete } from "@skillstep/shared";
+import { ArrowLeft, Check, Clock3, ExternalLink, MoveLeft, MoveRight } from "lucide-react-native";
 import { useCallback, useEffect, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Linking,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import Animated, {
+  Easing,
+  FadeInDown,
+  FadeInRight,
+  FadeOutUp,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
+import { WebView } from "react-native-webview";
 
 import { colors } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
 import { sizes } from "../../../theme/sizes";
 import { spacing } from "../../../theme/spacing";
 import { typography } from "../../../theme/typography";
+import { successFeedback, tapFeedback, warningFeedback } from "../../../utils/haptics";
 import { planIcons } from "../planIcons";
+
+const YOUTUBE_EMBED_REFERER = "https://skillstep.app/";
 
 interface PlanDetailScreenProps {
   onBack: () => void;
+  onLoadTechniqueContent: (
+    techniqueId: string,
+    input: ResolveTechniqueContentInput,
+  ) => Promise<void>;
   onSetTechniqueStatus: (techniqueId: string, status: TechniqueStatus) => Promise<void>;
   onToggleCriterion: (criterionId: string) => Promise<void>;
   plan: Plan;
   progressPercent: number;
   states: Record<string, TechniqueUserState>;
+  techniqueContentById: Record<string, TechniqueContent>;
+  techniqueContentLoadingById: Record<string, boolean>;
 }
 
 export function PlanDetailScreen({
   onBack,
+  onLoadTechniqueContent,
   onSetTechniqueStatus,
   onToggleCriterion,
   plan,
   progressPercent,
   states,
+  techniqueContentById,
+  techniqueContentLoadingById,
 }: PlanDetailScreenProps) {
   const Icon = planIcons[plan.icon];
   const [activeIndex, setActiveIndex] = useState(() => getFirstActiveIndex(plan, states));
+  const [achievementNotice, setAchievementNotice] = useState<AchievementNoticeState | null>(null);
+  const progressValue = useSharedValue(progressPercent);
   const activeTechnique = plan.techniques[activeIndex];
   const activeState = activeTechnique ? (states[activeTechnique.id]?.status ?? "todo") : "todo";
   const activeCheckedCriteria = activeTechnique
     ? (states[activeTechnique.id]?.checkedCriteria ?? [])
     : [];
+  const isPracticeCompletionReady = activeTechnique
+    ? hasCheckedAllCriteria(activeTechnique, activeCheckedCriteria)
+    : false;
+  const isPracticeCompletionDisabled = activeState === "mastered" || !isPracticeCompletionReady;
+  const activeContent = activeTechnique ? techniqueContentById[activeTechnique.id] : undefined;
+  const isActiveContentLoading = activeTechnique
+    ? (techniqueContentLoadingById[activeTechnique.id] ?? false)
+    : false;
   const masteredCount = plan.techniques.filter(
     (technique) => states[technique.id]?.status === "mastered",
   ).length;
+  const progressFillStyle = useAnimatedStyle(() => ({
+    width: `${progressValue.value}%`,
+  }));
+
+  useEffect(() => {
+    progressValue.value = withTiming(progressPercent, {
+      duration: 420,
+      easing: Easing.out(Easing.cubic),
+    });
+  }, [progressPercent, progressValue]);
+
+  useEffect(() => {
+    if (!achievementNotice || achievementNotice.kind === "plan") {
+      return;
+    }
+
+    const timeout = setTimeout(() => setAchievementNotice(null), 3200);
+    return () => clearTimeout(timeout);
+  }, [achievementNotice]);
 
   useEffect(() => {
     setActiveIndex((currentIndex) => {
@@ -64,9 +123,45 @@ export function PlanDetailScreen({
       return;
     }
 
+    const checkedCriteria = states[activeTechnique.id]?.checkedCriteria ?? [];
+    if (!hasCheckedAllCriteria(activeTechnique, checkedCriteria)) {
+      await warningFeedback();
+      return;
+    }
+
+    await successFeedback();
     await onSetTechniqueStatus(activeTechnique.id, "mastered");
+    const nextStates = {
+      ...states,
+      [activeTechnique.id]: {
+        checkedCriteria: states[activeTechnique.id]?.checkedCriteria ?? [],
+        status: "mastered" as const,
+      },
+    };
+    const nextProgress = computeLocalProgress(plan, nextStates);
+    const planIsComplete = isPlanComplete(nextProgress);
+
+    setAchievementNotice({
+      body: planIsComplete
+        ? `You completed the ${plan.hobby} level jump. Your next path is ready when you are.`
+        : "Nice. Keep the momentum going with the next smallest useful practice step.",
+      kind: planIsComplete ? "plan" : "module",
+      title: planIsComplete ? "Goal achieved" : `${activeTechnique.name} is complete`,
+    });
     setActiveIndex((currentIndex) => Math.min(currentIndex + 1, plan.techniques.length - 1));
-  }, [activeTechnique, onSetTechniqueStatus, plan.techniques.length]);
+  }, [activeTechnique, onSetTechniqueStatus, plan, states]);
+
+  useEffect(() => {
+    if (!activeTechnique) {
+      return;
+    }
+
+    void onLoadTechniqueContent(activeTechnique.id, {
+      drillText: activeTechnique.drill.text,
+      hobby: plan.hobby,
+      techniqueName: activeTechnique.name,
+    });
+  }, [activeTechnique, onLoadTechniqueContent, plan.hobby]);
 
   if (!activeTechnique) {
     return null;
@@ -94,33 +189,49 @@ export function PlanDetailScreen({
           {masteredCount}/{plan.techniques.length} modules complete
         </Text>
         <View style={styles.progressTrack}>
-          <View style={[styles.progressFill, { width: `${progressPercent}%` }]} />
+          <Animated.View style={[styles.progressFill, progressFillStyle]} />
         </View>
       </View>
+
+      {achievementNotice ? (
+        <AchievementNotice
+          body={achievementNotice.body}
+          kind={achievementNotice.kind}
+          onDismiss={() => setAchievementNotice(null)}
+          title={achievementNotice.title}
+        />
+      ) : null}
 
       <View style={styles.deckArea}>
         <Text style={styles.deckCounter}>
           Module {activeIndex + 1} of {plan.techniques.length}
         </Text>
-        <View style={styles.flashCard}>
+        <Animated.View
+          entering={FadeInRight.duration(260).easing(Easing.out(Easing.cubic))}
+          key={activeTechnique.id}
+          style={styles.flashCard}
+        >
           <ModuleFlashCard
             checkedCriteria={activeCheckedCriteria}
+            content={activeContent}
+            isContentLoading={isActiveContentLoading}
             onToggleCriterion={onToggleCriterion}
             status={activeState}
             technique={activeTechnique}
           />
-        </View>
+        </Animated.View>
       </View>
 
       <View style={styles.actionsPanel}>
         <Pressable
           accessibilityRole="button"
-          disabled={activeState === "mastered"}
+          accessibilityState={{ disabled: isPracticeCompletionDisabled }}
+          disabled={isPracticeCompletionDisabled}
           onPress={() => void completeCurrentModule()}
           style={({ pressed }) => [
             styles.primaryAction,
-            activeState === "mastered" ? styles.primaryActionDisabled : undefined,
-            pressed && activeState !== "mastered" ? styles.pressed : undefined,
+            isPracticeCompletionDisabled ? styles.primaryActionDisabled : undefined,
+            pressed && !isPracticeCompletionDisabled ? styles.pressed : undefined,
           ]}
         >
           <Check color={colors.text.inverse} size={18} strokeWidth={2.8} />
@@ -128,6 +239,11 @@ export function PlanDetailScreen({
             {activeState === "mastered" ? "Practice completed" : "Mark practice complete"}
           </Text>
         </Pressable>
+        {activeState !== "mastered" && !isPracticeCompletionReady ? (
+          <Text style={styles.completionHint}>
+            Check all mastery criteria before completing this module.
+          </Text>
+        ) : null}
 
         <View style={styles.cardActions}>
           <NavigationButton
@@ -150,13 +266,49 @@ export function PlanDetailScreen({
   );
 }
 
+type AchievementNoticeState = {
+  body: string;
+  kind: "module" | "plan";
+  title: string;
+};
+
+function AchievementNotice({
+  body,
+  kind,
+  onDismiss,
+  title,
+}: AchievementNoticeState & { onDismiss: () => void }) {
+  return (
+    <Animated.View
+      entering={FadeInDown.springify().damping(16).stiffness(180)}
+      exiting={FadeOutUp.duration(180)}
+      style={[styles.achievementPanel, kind === "plan" ? styles.achievementPanelComplete : null]}
+    >
+      <View style={styles.achievementIcon}>
+        <Check color={colors.text.inverse} size={22} strokeWidth={3} />
+      </View>
+      <View style={styles.achievementCopy}>
+        <Text style={styles.achievementTitle}>{title}</Text>
+        <Text style={styles.achievementBody}>{body}</Text>
+      </View>
+      <Pressable accessibilityRole="button" hitSlop={10} onPress={onDismiss}>
+        <Text style={styles.achievementDismiss}>OK</Text>
+      </Pressable>
+    </Animated.View>
+  );
+}
+
 function ModuleFlashCard({
   checkedCriteria,
+  content,
+  isContentLoading,
   onToggleCriterion,
   status,
   technique,
 }: {
   checkedCriteria: string[];
+  content?: TechniqueContent;
+  isContentLoading: boolean;
   onToggleCriterion: (criterionId: string) => Promise<void>;
   status: TechniqueStatus;
   technique: Technique;
@@ -169,9 +321,7 @@ function ModuleFlashCard({
 
       <View style={styles.cardTitleStack}>
         <Text style={styles.moduleTitle}>{technique.name}</Text>
-        <Text numberOfLines={3} style={styles.moduleWhy}>
-          {technique.whyItMatters}
-        </Text>
+        <Text style={styles.moduleWhy}>{technique.whyItMatters}</Text>
       </View>
 
       <View style={styles.drillPanel}>
@@ -186,11 +336,7 @@ function ModuleFlashCard({
         </Text>
       </View>
 
-      <View style={styles.formatRow}>
-        <FormatPill icon="video" label="Watch" value={technique.modalityProfile.video} />
-        <FormatPill icon="read" label="Read" value={technique.modalityProfile.reading} />
-        <FormatPill icon="practice" label="Do" value={technique.modalityProfile.practice} />
-      </View>
+      <RecommendedVideosSection content={content} isLoading={isContentLoading} />
 
       <View style={styles.masteryBox}>
         <Text style={styles.masteryLabel}>You are done when you can:</Text>
@@ -204,7 +350,10 @@ function ModuleFlashCard({
               accessibilityState={{ checked: checkedCriteria.includes(criterion.id) }}
               disabled={criterion.id === "fallback"}
               key={criterion.id}
-              onPress={() => void onToggleCriterion(criterion.id)}
+              onPress={() => {
+                void tapFeedback();
+                void onToggleCriterion(criterion.id);
+              }}
               style={({ pressed }) => [
                 styles.masteryItem,
                 pressed && criterion.id !== "fallback" ? styles.pressed : undefined,
@@ -231,28 +380,115 @@ function ModuleFlashCard({
   );
 }
 
-function FormatPill({
-  icon,
-  label,
-  value,
+function RecommendedVideosSection({
+  content,
+  isLoading,
 }: {
-  icon: "practice" | "read" | "video";
-  label: string;
-  value: "none" | "primary" | "supporting";
+  content?: TechniqueContent;
+  isLoading: boolean;
 }) {
-  const Icon = icon === "video" ? Video : icon === "read" ? BookOpen : Dumbbell;
-  const isPrimary = value === "primary";
+  const videos = content?.videos ?? [];
+  const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
+  const selectedVideo = videos.find((video) => video.videoId === selectedVideoId) ?? null;
+
+  useEffect(() => {
+    if (selectedVideoId && !videos.some((video) => video.videoId === selectedVideoId)) {
+      setSelectedVideoId(null);
+    }
+  }, [selectedVideoId, videos]);
+
+  if (!isLoading && videos.length === 0) {
+    return null;
+  }
 
   return (
-    <View style={[styles.formatPill, isPrimary ? styles.formatPillPrimary : undefined]}>
-      <Icon
-        color={isPrimary ? colors.text.inverse : colors.text.brand}
-        size={14}
-        strokeWidth={2.4}
+    <View style={styles.videosBox}>
+      <View style={styles.videosHeaderRow}>
+        <Text style={styles.videosTitle}>Recommended videos</Text>
+        {isLoading ? <ActivityIndicator color={colors.action.primary} size="small" /> : null}
+      </View>
+
+      {videos.length > 0 ? (
+        <>
+          {selectedVideo ? <InlineYouTubePlayer video={selectedVideo} /> : null}
+          <View style={styles.videoList}>
+            {videos.map((video) => (
+              <VideoResourceRow
+                isSelected={video.videoId === selectedVideoId}
+                key={video.videoId}
+                onSelect={() => setSelectedVideoId(video.videoId)}
+                video={video}
+              />
+            ))}
+          </View>
+        </>
+      ) : (
+        <Text style={styles.videoEmptyText}>Finding useful YouTube videos...</Text>
+      )}
+    </View>
+  );
+}
+
+function InlineYouTubePlayer({ video }: { video: VideoResource }) {
+  return (
+    <View style={styles.inlinePlayerShell}>
+      <WebView
+        allowsFullscreenVideo
+        allowsInlineMediaPlayback
+        domStorageEnabled
+        javaScriptEnabled
+        mediaPlaybackRequiresUserAction
+        source={{
+          headers: {
+            Referer: YOUTUBE_EMBED_REFERER,
+          },
+          uri: buildYouTubeEmbedUrl(video.videoId),
+        }}
+        style={styles.inlinePlayer}
       />
-      <Text style={[styles.formatText, isPrimary ? styles.formatTextPrimary : undefined]}>
-        {label}
+    </View>
+  );
+}
+
+function VideoResourceRow({
+  isSelected,
+  onSelect,
+  video,
+}: {
+  isSelected: boolean;
+  onSelect: () => void;
+  video: VideoResource;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ selected: isSelected }}
+      onPress={onSelect}
+      style={({ pressed }) => [
+        styles.videoRow,
+        isSelected ? styles.videoRowSelected : undefined,
+        pressed ? styles.pressed : undefined,
+      ]}
+    >
+      <YouTubeLogo />
+      <Text numberOfLines={1} style={styles.videoTitle}>
+        {video.title} · {video.channelTitle} · {formatDuration(video.durationSec)}
       </Text>
+      <Pressable
+        accessibilityRole="link"
+        hitSlop={8}
+        onPress={() => void Linking.openURL(`https://www.youtube.com/watch?v=${video.videoId}`)}
+      >
+        <ExternalLink color={colors.text.tertiary} size={16} strokeWidth={2.4} />
+      </Pressable>
+    </Pressable>
+  );
+}
+
+function YouTubeLogo() {
+  return (
+    <View style={styles.youtubeLogo}>
+      <View style={styles.youtubePlayTriangle} />
     </View>
   );
 }
@@ -297,6 +533,56 @@ function getFirstActiveIndex(plan: Plan, states: Record<string, TechniqueUserSta
   return activeIndex === -1 ? 0 : activeIndex;
 }
 
+function hasCheckedAllCriteria(technique: Technique, checkedCriteria: string[]) {
+  if (technique.masteryCriteria.length === 0) {
+    return false;
+  }
+
+  const checkedCriteriaSet = new Set(checkedCriteria);
+  return technique.masteryCriteria.every((criterion) => checkedCriteriaSet.has(criterion.id));
+}
+
+function computeLocalProgress(plan: Plan, states: Record<string, TechniqueUserState>) {
+  let struck = 0;
+  let mastered = 0;
+  let inProgress = 0;
+
+  for (const technique of plan.techniques) {
+    const status = states[technique.id]?.status ?? "todo";
+    if (status === "struck") struck += 1;
+    else if (status === "mastered") mastered += 1;
+    else if (status === "in_progress") inProgress += 1;
+  }
+
+  const total = plan.techniques.length;
+  const active = total - struck;
+  const percent = active === 0 ? 0 : Math.round((mastered / active) * 100);
+
+  return { active, inProgress, mastered, percent, struck, total };
+}
+
+function formatDuration(durationSec: number): string {
+  const minutes = Math.floor(durationSec / 60);
+  const seconds = durationSec % 60;
+
+  if (minutes >= 60) {
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    return `${hours}h ${remainingMinutes}m`;
+  }
+
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
+function buildYouTubeEmbedUrl(videoId: string): string {
+  const params = new URLSearchParams({
+    playsinline: "1",
+    rel: "0",
+  });
+
+  return `https://www.youtube-nocookie.com/embed/${videoId}?${params.toString()}`;
+}
+
 const statusLabel: Record<TechniqueStatus, string> = {
   in_progress: "In practice",
   mastered: "Completed",
@@ -305,6 +591,45 @@ const statusLabel: Record<TechniqueStatus, string> = {
 };
 
 const styles = StyleSheet.create({
+  achievementBody: {
+    ...typography.bodySmall,
+    color: colors.text.body,
+  },
+  achievementCopy: {
+    flex: 1,
+    gap: spacing.xs,
+  },
+  achievementDismiss: {
+    color: colors.text.brand,
+    fontSize: typography.labelMedium.fontSize,
+    fontWeight: "900",
+  },
+  achievementIcon: {
+    alignItems: "center",
+    backgroundColor: colors.action.primary,
+    borderRadius: radius.pill,
+    height: 42,
+    justifyContent: "center",
+    width: 42,
+  },
+  achievementPanel: {
+    alignItems: "center",
+    backgroundColor: colors.surface.input,
+    borderColor: colors.borders.success,
+    borderRadius: 24,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: spacing.lg,
+    padding: spacing.lg,
+  },
+  achievementPanelComplete: {
+    backgroundColor: colors.surface.successSoft,
+  },
+  achievementTitle: {
+    ...typography.titleSmall,
+    color: colors.text.primary,
+    fontSize: 20,
+  },
   backButton: {
     alignItems: "center",
     alignSelf: "flex-start",
@@ -332,6 +657,12 @@ const styles = StyleSheet.create({
   },
   cardTitleStack: {
     gap: spacing.sm,
+  },
+  completionHint: {
+    ...typography.bodySmall,
+    color: colors.text.muted,
+    fontWeight: "700",
+    textAlign: "center",
   },
   container: {
     backgroundColor: colors.surface.card,
@@ -388,34 +719,6 @@ const styles = StyleSheet.create({
     padding: spacing.panel,
     width: "100%",
   },
-  formatPill: {
-    alignItems: "center",
-    backgroundColor: colors.surface.successSoft,
-    borderColor: colors.borders.success,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    flexDirection: "row",
-    gap: spacing.xs,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  formatPillPrimary: {
-    backgroundColor: colors.surface.inverse,
-    borderColor: colors.surface.inverse,
-  },
-  formatRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.sm,
-  },
-  formatText: {
-    color: colors.text.brand,
-    fontSize: 11,
-    fontWeight: "800",
-  },
-  formatTextPrimary: {
-    color: colors.text.inverse,
-  },
   headerPanel: {
     backgroundColor: colors.surface.successSoft,
     borderRadius: 32,
@@ -436,6 +739,17 @@ const styles = StyleSheet.create({
     height: sizes.iconCircle,
     justifyContent: "center",
     width: sizes.iconCircle,
+  },
+  inlinePlayer: {
+    backgroundColor: colors.surface.inverse,
+    flex: 1,
+  },
+  inlinePlayerShell: {
+    aspectRatio: 16 / 9,
+    backgroundColor: colors.surface.inverse,
+    borderRadius: radius.lg,
+    overflow: "hidden",
+    width: "100%",
   },
   masteryBox: {
     backgroundColor: colors.surface.input,
@@ -598,5 +912,70 @@ const styles = StyleSheet.create({
   title: {
     ...typography.displaySmall,
     color: colors.text.primary,
+  },
+  videoEmptyText: {
+    ...typography.bodySmall,
+    color: colors.text.muted,
+  },
+  videoList: {
+    gap: spacing.xs,
+  },
+  videoRow: {
+    alignItems: "center",
+    backgroundColor: colors.surface.card,
+    borderColor: colors.borders.default,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: spacing.sm,
+    minHeight: 42,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  videoRowSelected: {
+    borderColor: colors.action.primary,
+  },
+  videosBox: {
+    backgroundColor: colors.surface.input,
+    borderColor: colors.borders.default,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    gap: spacing.md,
+    padding: spacing.lg,
+  },
+  videosHeaderRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  videosTitle: {
+    color: colors.text.primary,
+    fontSize: typography.labelLarge.fontSize,
+    fontWeight: "900",
+  },
+  videoTitle: {
+    color: colors.text.primary,
+    flex: 1,
+    fontSize: typography.labelMedium.fontSize,
+    fontWeight: "800",
+  },
+  youtubeLogo: {
+    alignItems: "center",
+    backgroundColor: "#ff0033",
+    borderRadius: 7,
+    height: 22,
+    justifyContent: "center",
+    width: 30,
+  },
+  youtubePlayTriangle: {
+    borderBottomColor: "transparent",
+    borderBottomWidth: 5,
+    borderLeftColor: colors.text.inverse,
+    borderLeftWidth: 8,
+    borderTopColor: "transparent",
+    borderTopWidth: 5,
+    height: 0,
+    marginLeft: 2,
+    width: 0,
   },
 });

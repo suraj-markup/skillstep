@@ -1,3 +1,4 @@
+import { resolveHobbyIcon } from "@skillstep/shared";
 import { StatusBar } from "expo-status-bar";
 import { Plus, Sparkles } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -41,6 +42,7 @@ export function PlansHomeScreen() {
     generatePlan,
     isGenerating,
     isLoading,
+    loadTechniqueContent,
     plans,
     progress,
     progressByPlanId,
@@ -48,6 +50,8 @@ export function PlansHomeScreen() {
     selectedPlanStates,
     selectPlan,
     setTechniqueStatus,
+    techniqueContentById,
+    techniqueContentLoadingById,
     toggleCriterion,
   } = usePlans();
   const { width: screenWidth } = useWindowDimensions();
@@ -186,34 +190,51 @@ export function PlansHomeScreen() {
     return plansByName;
   }, [plans]);
   const dashboardHobbies = useMemo(() => {
-    const hobbiesByName = new Map<string, UserHobby>();
+    const savedHobbiesByName = new Map<string, UserHobby>();
 
     for (const hobby of userHobbies) {
-      hobbiesByName.set(normalizeHobbyKey(hobby.name), hobby);
+      savedHobbiesByName.set(normalizeHobbyKey(hobby.name), hobby);
     }
 
-    for (const plan of plans) {
-      const hobbyKey = normalizeHobbyKey(plan.hobby);
-      if (!hobbiesByName.has(hobbyKey)) {
-        hobbiesByName.set(hobbyKey, {
-          icon: plan.icon,
-          id: hobbyKey,
+    return plans
+      .map((plan) => {
+        const hobbyKey = normalizeHobbyKey(plan.hobby);
+        const savedHobby = savedHobbiesByName.get(hobbyKey);
+
+        return {
+          createdAt: savedHobby?.createdAt ?? plan.createdAt,
+          id: savedHobby?.id ?? hobbyKey,
+          icon:
+            savedHobby?.icon === "sparkles"
+              ? resolveHobbyIcon(plan.hobby, plan.icon)
+              : (savedHobby?.icon ?? resolveHobbyIcon(plan.hobby, plan.icon)),
           name: plan.hobby,
-          source: "search",
-        });
-      }
-    }
+          source: savedHobby?.source ?? ("search" as const),
+          updatedAt: savedHobby?.updatedAt ?? plan.createdAt,
+        };
+      })
+      .sort((firstHobby, secondHobby) => {
+        const firstTime = Date.parse(firstHobby.updatedAt);
+        const secondTime = Date.parse(secondHobby.updatedAt);
 
-    return Array.from(hobbiesByName.values());
+        return secondTime - firstTime;
+      });
   }, [plans, userHobbies]);
+  const plannedHobbyNames = useMemo(
+    () => new Set(plans.map((plan) => normalizeHobbyKey(plan.hobby))),
+    [plans],
+  );
   const dashboardHobbyNames = useMemo(
     () => new Set(dashboardHobbies.map((hobby) => normalizeHobbyKey(hobby.name))),
     [dashboardHobbies],
   );
   const availableDefaultHobbies = useMemo(
     () =>
-      DEFAULT_HOBBIES.filter((hobby) => !dashboardHobbyNames.has(normalizeHobbyKey(hobby.name))),
-    [dashboardHobbyNames],
+      DEFAULT_HOBBIES.filter((hobby) => {
+        const hobbyKey = normalizeHobbyKey(hobby.name);
+        return !dashboardHobbyNames.has(hobbyKey) && !plannedHobbyNames.has(hobbyKey);
+      }),
+    [dashboardHobbyNames, plannedHobbyNames],
   );
   const detailPlan = useMemo(
     () => plans.find((plan) => plan.id === detailPlanId) ?? selectedPlan,
@@ -228,6 +249,11 @@ export function PlansHomeScreen() {
     const existingPlan = planByHobbyName.get(normalizeHobbyKey(hobby));
 
     if (existingPlan) {
+      void saveUserHobby({
+        icon: options.icon ?? resolveHobbyIcon(existingPlan.hobby, existingPlan.icon),
+        name: existingPlan.hobby,
+        source: options.source,
+      }).then(loadUserHobbies);
       setDetailPlanId(existingPlan.id);
       selectPlan(existingPlan.id);
       setMode("detail");
@@ -279,11 +305,14 @@ export function PlansHomeScreen() {
     return (
       <PlanDetailScreen
         onBack={goBackToDashboard}
+        onLoadTechniqueContent={loadTechniqueContent}
         onSetTechniqueStatus={setTechniqueStatus}
         onToggleCriterion={toggleCriterion}
         plan={detailPlan}
         progressPercent={detailPlanProgress?.percent ?? 0}
         states={selectedPlanStates}
+        techniqueContentById={techniqueContentById}
+        techniqueContentLoadingById={techniqueContentLoadingById}
       />
     );
   }
@@ -302,13 +331,9 @@ export function PlansHomeScreen() {
           strokeWidth={1.8}
           style={styles.heroSparkle}
         />
-        <View style={styles.headerTopRow}>
-          <Text style={styles.eyebrow}>Welcome back,</Text>
-        </View>
+        <Text style={styles.greeting}>Welcome,</Text>
         <Text style={styles.title}>{profile.name}</Text>
-        <Text style={styles.subtitle}>
-          Choose a hobby and Skillstep will shape the next useful practice plan around your level.
-        </Text>
+        <Text style={styles.subtitle}>Pick a hobby. Get a focused practice path.</Text>
       </View>
 
       {errorMessage ? <StatusNotice message={errorMessage} /> : null}
@@ -435,6 +460,12 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 0,
     textTransform: "uppercase",
+  },
+  greeting: {
+    color: colors.text.accent,
+    fontSize: typography.bodySmall.fontSize,
+    fontWeight: "700",
+    letterSpacing: 0,
   },
   title: {
     ...typography.displayLarge,

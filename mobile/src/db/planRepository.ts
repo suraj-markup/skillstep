@@ -1,13 +1,15 @@
 import {
   type Plan,
   PlanSchema,
+  type TechniqueContent,
+  TechniqueContentSchema,
   type TechniqueStatus,
   TechniqueStatusSchema,
   type TechniqueUserState,
 } from "@skillstep/shared";
 import type { SQLiteDatabase } from "expo-sqlite";
 
-import { getDatabase } from "./database";
+import { runDatabaseOperation } from "./database";
 import { TABLES } from "./schema";
 
 type PlanRow = {
@@ -54,44 +56,52 @@ type CheckedAtRow = {
   checked_at: string | null;
 };
 
+type TechniqueContentRow = {
+  cached_at: string | null;
+  primer: string | null;
+  videos_json: string | null;
+};
+
 export async function savePlan(plan: Plan): Promise<void> {
   const validPlan = PlanSchema.parse(plan);
-  const database = await getDatabase();
 
-  await database.withTransactionAsync(async () => {
-    await writePlan(database, validPlan);
+  await runDatabaseOperation(async (database) => {
+    await database.withTransactionAsync(async () => {
+      await writePlan(database, validPlan);
+    });
   });
 }
 
 export async function saveCurrentPlanForHobby(plan: Plan): Promise<void> {
   const validPlan = PlanSchema.parse(plan);
-  const database = await getDatabase();
 
-  await database.withTransactionAsync(async () => {
-    const planRows = await database.getAllAsync<Pick<PlanRow, "id" | "hobby">>(
-      `
-      SELECT id, hobby
-      FROM ${TABLES.plans}
-      WHERE id != ?;
-      `,
-      [validPlan.id],
-    );
-    const currentHobbyKey = normalizeHobbyKey(validPlan.hobby);
-    const stalePlanIds = planRows
-      .filter((planRow) => normalizeHobbyKey(planRow.hobby) === currentHobbyKey)
-      .map((planRow) => planRow.id);
-
-    if (stalePlanIds.length > 0) {
-      await database.runAsync(
+  await runDatabaseOperation(async (database) => {
+    await database.withTransactionAsync(async () => {
+      const planRows = await database.getAllAsync<Pick<PlanRow, "id" | "hobby">>(
         `
-        DELETE FROM ${TABLES.plans}
-        WHERE id IN (${createPlaceholders(stalePlanIds.length)});
+        SELECT id, hobby
+        FROM ${TABLES.plans}
+        WHERE id != ?;
         `,
-        stalePlanIds,
+        [validPlan.id],
       );
-    }
+      const currentHobbyKey = normalizeHobbyKey(validPlan.hobby);
+      const stalePlanIds = planRows
+        .filter((planRow) => normalizeHobbyKey(planRow.hobby) === currentHobbyKey)
+        .map((planRow) => planRow.id);
 
-    await writePlan(database, validPlan);
+      if (stalePlanIds.length > 0) {
+        await database.runAsync(
+          `
+          DELETE FROM ${TABLES.plans}
+          WHERE id IN (${createPlaceholders(stalePlanIds.length)});
+          `,
+          stalePlanIds,
+        );
+      }
+
+      await writePlan(database, validPlan);
+    });
   });
 }
 
@@ -234,21 +244,31 @@ async function writePlan(database: SQLiteDatabase, validPlan: Plan): Promise<voi
 }
 
 export async function getPlans(): Promise<Plan[]> {
-  const database = await getDatabase();
-  const planRows = await database.getAllAsync<PlanRow>(
-    `
-    SELECT *
-    FROM ${TABLES.plans}
-    ORDER BY datetime(created_at) DESC;
-    `,
-  );
+  return runDatabaseOperation(async (database) => {
+    const planRows = await database.getAllAsync<PlanRow>(
+      `
+      SELECT *
+      FROM ${TABLES.plans}
+      ORDER BY datetime(created_at) DESC;
+      `,
+    );
 
-  const plans = await Promise.all(planRows.map((planRow) => getPlanById(planRow.id)));
-  return plans.filter((plan): plan is Plan => plan !== null);
+    const plans: Plan[] = [];
+
+    for (const planRow of planRows) {
+      const plan = await readPlanById(database, planRow.id);
+      if (plan) plans.push(plan);
+    }
+
+    return plans;
+  });
 }
 
 export async function getPlanById(planId: string): Promise<Plan | null> {
-  const database = await getDatabase();
+  return runDatabaseOperation((database) => readPlanById(database, planId));
+}
+
+async function readPlanById(database: SQLiteDatabase, planId: string): Promise<Plan | null> {
   const planRow = await database.getFirstAsync<PlanRow>(
     `
     SELECT *
@@ -334,22 +354,76 @@ export async function updateTechniqueStatus(
   status: TechniqueStatus,
 ): Promise<void> {
   const validStatus = TechniqueStatusSchema.parse(status);
-  const database = await getDatabase();
 
-  await database.runAsync(
-    `
-    INSERT INTO ${TABLES.techniqueStates} (
-      technique_id,
-      status,
-      updated_at
-    )
-    VALUES (?, ?, ?)
-    ON CONFLICT(technique_id) DO UPDATE SET
-      status = excluded.status,
-      updated_at = excluded.updated_at;
-    `,
-    [techniqueId, validStatus, new Date().toISOString()],
-  );
+  await runDatabaseOperation(async (database) => {
+    await database.runAsync(
+      `
+      INSERT INTO ${TABLES.techniqueStates} (
+        technique_id,
+        status,
+        updated_at
+      )
+      VALUES (?, ?, ?)
+      ON CONFLICT(technique_id) DO UPDATE SET
+        status = excluded.status,
+        updated_at = excluded.updated_at;
+      `,
+      [techniqueId, validStatus, new Date().toISOString()],
+    );
+  });
+}
+
+export async function getTechniqueContent(techniqueId: string): Promise<TechniqueContent | null> {
+  return runDatabaseOperation(async (database) => {
+    const row = await database.getFirstAsync<TechniqueContentRow>(
+      `
+      SELECT primer, videos_json, cached_at
+      FROM ${TABLES.techniqueContent}
+      WHERE technique_id = ?;
+      `,
+      [techniqueId],
+    );
+
+    if (!row) {
+      return null;
+    }
+
+    return TechniqueContentSchema.parse({
+      primer: row.primer ?? undefined,
+      videos: row.videos_json ? JSON.parse(row.videos_json) : undefined,
+    });
+  });
+}
+
+export async function saveTechniqueContent(
+  techniqueId: string,
+  content: TechniqueContent,
+): Promise<void> {
+  const validContent = TechniqueContentSchema.parse(content);
+
+  await runDatabaseOperation(async (database) => {
+    await database.runAsync(
+      `
+      INSERT INTO ${TABLES.techniqueContent} (
+        technique_id,
+        primer,
+        videos_json,
+        cached_at
+      )
+      VALUES (?, ?, ?, ?)
+      ON CONFLICT(technique_id) DO UPDATE SET
+        primer = excluded.primer,
+        videos_json = excluded.videos_json,
+        cached_at = excluded.cached_at;
+      `,
+      [
+        techniqueId,
+        validContent.primer ?? null,
+        JSON.stringify(validContent.videos ?? []),
+        new Date().toISOString(),
+      ],
+    );
+  });
 }
 
 function createPlaceholders(count: number): string {
@@ -361,85 +435,87 @@ function normalizeHobbyKey(value: string): string {
 }
 
 export async function toggleMasteryCriterion(criterionId: string): Promise<boolean> {
-  const database = await getDatabase();
-  let isChecked = false;
+  return runDatabaseOperation(async (database) => {
+    let isChecked = false;
 
-  await database.withTransactionAsync(async () => {
-    const row = await database.getFirstAsync<CheckedAtRow>(
-      `
-      SELECT checked_at
-      FROM ${TABLES.masteryCriteria}
-      WHERE id = ?;
-      `,
-      [criterionId],
-    );
+    await database.withTransactionAsync(async () => {
+      const row = await database.getFirstAsync<CheckedAtRow>(
+        `
+        SELECT checked_at
+        FROM ${TABLES.masteryCriteria}
+        WHERE id = ?;
+        `,
+        [criterionId],
+      );
 
-    if (!row) {
-      throw new Error(`Mastery criterion not found: ${criterionId}`);
-    }
+      if (!row) {
+        throw new Error(`Mastery criterion not found: ${criterionId}`);
+      }
 
-    isChecked = row.checked_at === null;
+      isChecked = row.checked_at === null;
 
-    await database.runAsync(
-      `
-      UPDATE ${TABLES.masteryCriteria}
-      SET checked_at = ?
-      WHERE id = ?;
-      `,
-      [isChecked ? new Date().toISOString() : null, criterionId],
-    );
+      await database.runAsync(
+        `
+        UPDATE ${TABLES.masteryCriteria}
+        SET checked_at = ?
+        WHERE id = ?;
+        `,
+        [isChecked ? new Date().toISOString() : null, criterionId],
+      );
+    });
+
+    return isChecked;
   });
-
-  return isChecked;
 }
 
 export async function getTechniqueUserStates(
   planId: string,
 ): Promise<Record<string, TechniqueUserState>> {
-  const database = await getDatabase();
-  const stateRows = await database.getAllAsync<TechniqueStateRow>(
-    `
-    SELECT
-      states.technique_id,
-      states.status
-    FROM ${TABLES.techniqueStates} states
-    INNER JOIN ${TABLES.techniques} techniques
-      ON techniques.id = states.technique_id
-    WHERE techniques.plan_id = ?;
-    `,
-    [planId],
-  );
+  return runDatabaseOperation(async (database) => {
+    const stateRows = await database.getAllAsync<TechniqueStateRow>(
+      `
+      SELECT
+        states.technique_id,
+        states.status
+      FROM ${TABLES.techniqueStates} states
+      INNER JOIN ${TABLES.techniques} techniques
+        ON techniques.id = states.technique_id
+      WHERE techniques.plan_id = ?;
+      `,
+      [planId],
+    );
 
-  const checkedCriterionRows = await database.getAllAsync<CheckedCriterionRow>(
-    `
-    SELECT
-      criteria.technique_id,
-      criteria.id AS criterion_id
-    FROM ${TABLES.masteryCriteria} criteria
-    INNER JOIN ${TABLES.techniques} techniques
-      ON techniques.id = criteria.technique_id
-    WHERE techniques.plan_id = ?
-      AND criteria.checked_at IS NOT NULL;
-    `,
-    [planId],
-  );
+    const checkedCriterionRows = await database.getAllAsync<CheckedCriterionRow>(
+      `
+      SELECT
+        criteria.technique_id,
+        criteria.id AS criterion_id
+      FROM ${TABLES.masteryCriteria} criteria
+      INNER JOIN ${TABLES.techniques} techniques
+        ON techniques.id = criteria.technique_id
+      WHERE techniques.plan_id = ?
+        AND criteria.checked_at IS NOT NULL;
+      `,
+      [planId],
+    );
 
-  const checkedCriteriaByTechniqueId = checkedCriterionRows.reduce<Record<string, string[]>>(
-    (checkedCriteria, row) => {
-      checkedCriteria[row.technique_id] ??= [];
-      checkedCriteria[row.technique_id].push(row.criterion_id);
-      return checkedCriteria;
-    },
-    {},
-  );
+    const checkedCriteriaByTechniqueId = checkedCriterionRows.reduce<Record<string, string[]>>(
+      (checkedCriteria, row) => {
+        checkedCriteria[row.technique_id] ??= [];
+        checkedCriteria[row.technique_id].push(row.criterion_id);
+        return checkedCriteria;
+      },
+      {},
+    );
 
-  return stateRows.reduce<Record<string, TechniqueUserState>>((states, row) => {
-    states[row.technique_id] = {
-      status: TechniqueStatusSchema.parse(row.status),
-      checkedCriteria: checkedCriteriaByTechniqueId[row.technique_id] ?? [],
-    };
-    return states;
-  }, {});
+    return stateRows.reduce<Record<string, TechniqueUserState>>((states, row) => {
+      states[row.technique_id] = {
+        status: TechniqueStatusSchema.parse(row.status),
+        checkedCriteria: checkedCriteriaByTechniqueId[row.technique_id] ?? [],
+      };
+      return states;
+    }, {});
+  });
 }
 
 function groupCriteriaByTechniqueId(

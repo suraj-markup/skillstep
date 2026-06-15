@@ -3,6 +3,8 @@ import {
   type GeneratePlanInput,
   type Plan,
   type ProgressSummary,
+  type ResolveTechniqueContentInput,
+  type TechniqueContent,
   type TechniqueStatus,
   type TechniqueUserState,
 } from "@skillstep/shared";
@@ -11,8 +13,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { skillstepApi } from "../../api";
 import {
   getPlans,
+  getTechniqueContent,
   getTechniqueUserStates,
   saveCurrentPlanForHobby,
+  saveTechniqueContent,
   toggleMasteryCriterion,
   updateTechniqueStatus,
 } from "../../db";
@@ -22,6 +26,7 @@ export interface UsePlansResult {
   generatePlan: (input: GeneratePlanInput) => Promise<boolean>;
   isGenerating: boolean;
   isLoading: boolean;
+  loadTechniqueContent: (techniqueId: string, input: ResolveTechniqueContentInput) => Promise<void>;
   plans: Plan[];
   progress: ProgressSummary | null;
   progressByPlanId: Record<string, ProgressSummary>;
@@ -30,6 +35,8 @@ export interface UsePlansResult {
   selectedPlanStates: Record<string, TechniqueUserState>;
   selectPlan: (planId: string) => void;
   setTechniqueStatus: (techniqueId: string, status: TechniqueStatus) => Promise<void>;
+  techniqueContentById: Record<string, TechniqueContent>;
+  techniqueContentLoadingById: Record<string, boolean>;
   toggleCriterion: (criterionId: string) => Promise<void>;
 }
 
@@ -40,6 +47,12 @@ export function usePlans(): UsePlansResult {
     {},
   );
   const [progressByPlanId, setProgressByPlanId] = useState<Record<string, ProgressSummary>>({});
+  const [techniqueContentById, setTechniqueContentById] = useState<
+    Record<string, TechniqueContent>
+  >({});
+  const [techniqueContentLoadingById, setTechniqueContentLoadingById] = useState<
+    Record<string, boolean>
+  >({});
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -112,12 +125,12 @@ export function usePlans(): UsePlansResult {
 
     async function loadPlanProgress() {
       try {
-        const progressEntries = await Promise.all(
-          plans.map(async (plan) => {
-            const states = await getTechniqueUserStates(plan.id);
-            return [plan.id, computeProgress(plan, states)] as const;
-          }),
-        );
+        const progressEntries: Array<readonly [string, ProgressSummary]> = [];
+
+        for (const plan of plans) {
+          const states = await getTechniqueUserStates(plan.id);
+          progressEntries.push([plan.id, computeProgress(plan, states)] as const);
+        }
 
         if (isMounted) {
           setProgressByPlanId(Object.fromEntries(progressEntries));
@@ -209,11 +222,56 @@ export function usePlans(): UsePlansResult {
     [refreshSelectedPlanProgress],
   );
 
+  const loadTechniqueContent = useCallback(
+    async (techniqueId: string, input: ResolveTechniqueContentInput) => {
+      if (techniqueContentById[techniqueId] || techniqueContentLoadingById[techniqueId]) {
+        return;
+      }
+
+      setTechniqueContentLoadingById((currentLoading) => ({
+        ...currentLoading,
+        [techniqueId]: true,
+      }));
+
+      try {
+        const cachedContent = await getTechniqueContent(techniqueId);
+
+        if (cachedContent) {
+          setTechniqueContentById((currentContent) => ({
+            ...currentContent,
+            [techniqueId]: cachedContent,
+          }));
+          return;
+        }
+
+        const content = await skillstepApi.plans.resolveTechniqueContent(input);
+        await saveTechniqueContent(techniqueId, content);
+
+        setTechniqueContentById((currentContent) => ({
+          ...currentContent,
+          [techniqueId]: content,
+        }));
+      } catch {
+        setTechniqueContentById((currentContent) => ({
+          ...currentContent,
+          [techniqueId]: { videos: [] },
+        }));
+      } finally {
+        setTechniqueContentLoadingById((currentLoading) => ({
+          ...currentLoading,
+          [techniqueId]: false,
+        }));
+      }
+    },
+    [techniqueContentById, techniqueContentLoadingById],
+  );
+
   return {
     errorMessage,
     generatePlan,
     isGenerating,
     isLoading,
+    loadTechniqueContent,
     plans,
     progress,
     progressByPlanId,
@@ -222,6 +280,8 @@ export function usePlans(): UsePlansResult {
     selectedPlanStates,
     selectPlan: setSelectedPlanId,
     setTechniqueStatus,
+    techniqueContentById,
+    techniqueContentLoadingById,
     toggleCriterion,
   };
 }

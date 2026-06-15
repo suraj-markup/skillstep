@@ -62,7 +62,7 @@ export function AddHobbyScreen({
       <View style={styles.suggestionsSection}>
         <View style={styles.sectionTitleStack}>
           <Text style={styles.sectionTitle}>
-            {isSearching ? "Matching hobbies" : "Default hobbies"}
+            {isSearching ? "Matching hobbies" : "Popular hobbies"}
           </Text>
           <Text style={styles.sectionSubtitle}>
             {canCreateNewHobby

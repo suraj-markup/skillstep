@@ -44,57 +44,57 @@ export const DEFAULT_HOBBIES: DefaultHobby[] = [
   },
   {
     description: "Vocabulary, pronunciation, listening, and daily speaking.",
-    icon: "book",
+    icon: "language",
     name: "Language learning",
   },
   {
     description: "Breath control, tone, pitch, and confident song practice.",
-    icon: "guitar",
+    icon: "singing",
     name: "Singing",
   },
   {
     description: "Short-form ideas, editing rhythm, lighting, and consistency.",
-    icon: "camera",
+    icon: "content",
     name: "Content creation",
   },
   {
     description: "Posture, flexibility, balance, and calm repeatable sessions.",
-    icon: "fitness",
+    icon: "yoga",
     name: "Yoga",
   },
   {
     description: "Creative prompts, structure, revision, and finished pieces.",
-    icon: "book",
+    icon: "writing",
     name: "Creative writing",
   },
   {
     description: "Beat, coordination, musicality, and short choreography.",
-    icon: "fitness",
+    icon: "dance",
     name: "Dance",
   },
   {
     description: "Plant care, soil, watering rhythm, and seasonal routines.",
-    icon: "sparkles",
+    icon: "gardening",
     name: "Gardening",
   },
   {
     description: "Brewing variables, tasting notes, recipes, and consistency.",
-    icon: "cooking",
+    icon: "coffee",
     name: "Coffee brewing",
   },
   {
     description: "Composition, color, lettering, and reusable design taste.",
-    icon: "art",
+    icon: "design",
     name: "Graphic design",
   },
   {
     description: "Openings, movement, serve rhythm, and match confidence.",
-    icon: "fitness",
+    icon: "tennis",
     name: "Tennis",
   },
   {
     description: "Observation, editing, storytelling, and stronger visual taste.",
-    icon: "camera",
+    icon: "video",
     name: "Videography",
   },
 ];

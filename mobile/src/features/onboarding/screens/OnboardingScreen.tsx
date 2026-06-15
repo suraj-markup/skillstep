@@ -1,25 +1,37 @@
 import { StatusBar } from "expo-status-bar";
 import { ArrowRight, Sparkles } from "lucide-react-native";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Image,
   type ImageSourcePropType,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 
 import { colors } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
 import { spacing } from "../../../theme/spacing";
 import { typography } from "../../../theme/typography";
+import { tapFeedback } from "../../../utils/haptics";
 import { OnboardingTextInput } from "../components/OnboardingTextInput";
 import { useOnboardingForm } from "../useOnboardingForm";
 
 const hobbiesIllustration =
   require("../../../../assets/onboarding-hobbies.png") as ImageSourcePropType;
+const DOT_SIZE = 11;
+const DOT_GAP = 14;
+const ACTIVE_DOT_WIDTH = 36;
 
 interface OnboardingScreenProps {
   onComplete: (name: string) => Promise<void>;
@@ -30,9 +42,19 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
   const [step, setStep] = useState<"welcome" | "discover" | "name">("welcome");
 
   return (
-    <View style={styles.screen}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 12 : 0}
+      style={styles.screen}
+    >
       <StatusBar style="dark" />
-      <ScrollView contentContainerStyle={styles.shell}>
+      <ScrollView
+        automaticallyAdjustKeyboardInsets
+        contentContainerStyle={styles.shell}
+        keyboardDismissMode="interactive"
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         {step === "welcome" ? (
           <WelcomeStep onGetStarted={() => setStep("discover")} />
         ) : step === "discover" ? (
@@ -47,7 +69,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
           />
         )}
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -169,14 +191,27 @@ function NameStep({ canContinue, name, onBack, onChangeName, onComplete }: NameS
 }
 
 function PageDots({ activeIndex }: { activeIndex: number }) {
+  const activeDotIndex = useSharedValue(activeIndex);
+
+  useEffect(() => {
+    activeDotIndex.value = withTiming(activeIndex, {
+      duration: 360,
+      easing: Easing.out(Easing.cubic),
+    });
+  }, [activeDotIndex, activeIndex]);
+
+  const activeDotStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: activeDotIndex.value * (DOT_SIZE + DOT_GAP) }],
+  }));
+
   return (
     <View style={styles.pageDots}>
-      {[0, 1, 2].map((index) => (
-        <View
-          key={index}
-          style={[styles.pageDot, index === activeIndex ? styles.pageDotActive : undefined]}
-        />
-      ))}
+      <View style={styles.pageDotsTrack}>
+        {[0, 1, 2].map((index) => (
+          <View key={index} style={styles.pageDot} />
+        ))}
+        <Animated.View style={[styles.pageDotActive, activeDotStyle]} />
+      </View>
     </View>
   );
 }
@@ -188,11 +223,16 @@ interface PrimaryActionProps {
 }
 
 function PrimaryAction({ disabled = false, label, onPress }: PrimaryActionProps) {
+  async function handlePress() {
+    await tapFeedback();
+    await onPress();
+  }
+
   return (
     <Pressable
       accessibilityRole="button"
       disabled={disabled}
-      onPress={onPress}
+      onPress={() => void handlePress()}
       style={({ pressed }) => [
         styles.primaryAction,
         disabled ? styles.primaryActionDisabled : undefined,
@@ -265,20 +305,31 @@ const styles = StyleSheet.create({
   },
   pageDots: {
     alignItems: "center",
-    flexDirection: "row",
-    gap: spacing.xl,
     justifyContent: "center",
     marginBottom: spacing.screen,
   },
+  pageDotsTrack: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    minHeight: DOT_SIZE,
+    position: "relative",
+    width: DOT_SIZE * 3 + DOT_GAP * 2,
+  },
   pageDot: {
-    backgroundColor: colors.surface.inverse,
+    backgroundColor: colors.borders.default,
     borderRadius: radius.pill,
-    height: 11,
-    opacity: 0.85,
-    width: 11,
+    height: DOT_SIZE,
+    opacity: 0.8,
+    width: DOT_SIZE,
   },
   pageDotActive: {
-    width: 36,
+    backgroundColor: colors.surface.inverse,
+    borderRadius: radius.pill,
+    height: DOT_SIZE,
+    left: (DOT_SIZE - ACTIVE_DOT_WIDTH) / 2,
+    position: "absolute",
+    width: ACTIVE_DOT_WIDTH,
   },
   bottomStage: {
     alignItems: "center",
@@ -332,15 +383,15 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   discoverStage: {
-    minHeight: 540,
+    minHeight: 532,
     position: "relative",
   },
   discoverMintPanel: {
     borderRadius: 42,
-    height: 444,
+    height: 488,
     left: -58,
     right: -54,
-    top: 70,
+    top: 44,
     transform: [{ rotate: "7deg" }],
   },
   discoverLightSparkle: {
@@ -350,36 +401,31 @@ const styles = StyleSheet.create({
   },
   illustrationFrame: {
     alignItems: "center",
-    backgroundColor: colors.surface.card,
-    borderColor: colors.borders.success,
-    borderRadius: 36,
-    borderWidth: 1,
-    height: 194,
+    height: 242,
     justifyContent: "center",
-    left: 12,
+    left: 0,
     position: "absolute",
-    right: 12,
-    top: 102,
-    transform: [{ rotate: "-3deg" }],
+    right: 0,
+    top: 70,
   },
   hobbiesIllustration: {
-    height: 244,
-    width: 244,
+    height: 242,
+    width: 306,
   },
   discoverCopy: {
-    gap: spacing.xl,
-    paddingTop: 328,
+    gap: spacing.sm,
+    paddingTop: 324,
     position: "relative",
   },
   discoverTitle: {
     ...typography.displayLarge,
     color: colors.text.primary,
-    fontSize: 39,
-    lineHeight: 49,
+    fontSize: 36,
+    lineHeight: 43,
     maxWidth: 330,
   },
   discoverHint: {
-    ...typography.bodyLarge,
+    ...typography.bodyMedium,
     color: colors.text.body,
     maxWidth: 334,
   },

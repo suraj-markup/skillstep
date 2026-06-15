@@ -4,6 +4,7 @@ import {
   makePlan,
   type PlanIcon,
   PlanSchema,
+  resolveHobbyIcon,
 } from "@skillstep/shared";
 import type { AiProvider } from "./provider";
 
@@ -17,10 +18,40 @@ const MOCK_HOBBY_IDENTITIES: Record<string, { icon: PlanIcon; accent: Accent }> 
   poker: { icon: "cards", accent: "violet" },
 };
 
+const MOCK_ICON_ACCENTS: Partial<Record<PlanIcon, Accent>> = {
+  art: "rose",
+  camera: "sky",
+  cars: "clay",
+  coffee: "clay",
+  cooking: "clay",
+  cycling: "sage",
+  dance: "rose",
+  design: "rose",
+  fitness: "sage",
+  gardening: "sage",
+  guitar: "rose",
+  language: "sky",
+  music: "rose",
+  reading: "sage",
+  running: "clay",
+  singing: "rose",
+  sports: "clay",
+  swimming: "sky",
+  tennis: "amber",
+  travel: "sky",
+  video: "sky",
+  writing: "amber",
+  yoga: "sage",
+};
+
 export class MockAiProvider implements AiProvider {
   async generatePlan(input: GeneratePlanInput) {
     const hobby = titleCase(input.hobby);
-    const identity = MOCK_HOBBY_IDENTITIES[input.hobby.trim().toLowerCase()] ?? DEFAULT_IDENTITY;
+    const icon = resolveHobbyIcon(input.hobby);
+    const identity = MOCK_HOBBY_IDENTITIES[input.hobby.trim().toLowerCase()] ?? {
+      icon,
+      accent: MOCK_ICON_ACCENTS[icon] ?? DEFAULT_IDENTITY.accent,
+    };
 
     const plan = makePlan({
       id: `mock-plan-${slugify(input.hobby)}`,

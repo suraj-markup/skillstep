@@ -22,25 +22,35 @@ interface HobbyCardProps {
 
 type HobbyTone = keyof typeof colors.hobby;
 
-const HOBBY_ICON_TONES: Partial<Record<PlanIcon, HobbyTone>> = {
+const HOBBY_ICON_TONES: Record<PlanIcon, HobbyTone> = {
   art: "rose",
+  book: "sage",
   camera: "sky",
+  cards: "sage",
+  cars: "clay",
+  coffee: "clay",
+  content: "sky",
   cooking: "clay",
-  fitness: "sage",
-  guitar: "sun",
-  sparkles: "sky",
-  strategy: "sage",
-};
-
-const FEATURED_HOBBY_TONES: Record<string, HobbyTone> = {
-  chess: "sage",
-  cooking: "sun",
   cycling: "sage",
-  drawing: "rose",
+  dance: "rose",
+  design: "rose",
   fitness: "sage",
+  gaming: "sky",
+  gardening: "sage",
   guitar: "sun",
-  photography: "sky",
-  running: "rose",
+  language: "sky",
+  music: "rose",
+  reading: "sage",
+  running: "clay",
+  singing: "rose",
+  sparkles: "sky",
+  sports: "clay",
+  swimming: "sky",
+  strategy: "sage",
+  tennis: "sun",
+  travel: "sky",
+  video: "sky",
+  writing: "sun",
   yoga: "sage",
 };
 
@@ -56,10 +66,7 @@ export function HobbyCard({
   variant = "grid",
 }: HobbyCardProps) {
   const Icon = planIcons[icon];
-  const toneKey = HOBBY_ICON_TONES[icon] ?? "sage";
-  const featuredToneKey = FEATURED_HOBBY_TONES[name.toLowerCase()];
-  const tone = colors.hobby[featuredToneKey ?? toneKey];
-  const isFeatured = Boolean(featuredToneKey);
+  const tone = colors.hobby[HOBBY_ICON_TONES[icon]];
   const hasPlan = progressPercent !== undefined;
   const shouldShowModules = hasPlan && moduleCount !== undefined && completedModules !== undefined;
 
@@ -77,19 +84,14 @@ export function HobbyCard({
         variant === "rail" ? styles.hobbyCardRail : styles.hobbyCardGrid,
         cardWidth ? { width: cardWidth } : undefined,
         {
-          backgroundColor: isFeatured ? tone.surface : colors.surface.card,
-          borderColor: isFeatured ? tone.border : colors.borders.divider,
+          backgroundColor: colors.surface.card,
+          borderColor: colors.borders.divider,
         },
         pressed ? styles.hobbyCardPressed : undefined,
       ]}
     >
-      <View
-        style={[
-          styles.iconBadge,
-          { backgroundColor: isFeatured ? colors.surface.card : tone.surface },
-        ]}
-      >
-        <Icon color={isFeatured ? colors.surface.inverse : tone.icon} size={20} strokeWidth={2.5} />
+      <View style={[styles.iconBadge, { backgroundColor: tone.surface, borderColor: tone.border }]}>
+        <Icon color={tone.icon} size={20} strokeWidth={2.5} />
       </View>
       <Text numberOfLines={2} style={styles.hobbyCardTitle}>
         {name}
@@ -97,7 +99,12 @@ export function HobbyCard({
       {hasPlan ? (
         <View style={styles.progressStack}>
           <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${progressPercent}%` }]} />
+            <View
+              style={[
+                styles.progressFill,
+                { backgroundColor: tone.icon, width: `${progressPercent}%` },
+              ]}
+            />
           </View>
           <Text style={styles.progressText}>
             {shouldShowModules
@@ -136,6 +143,7 @@ const styles = StyleSheet.create({
   iconBadge: {
     alignItems: "center",
     borderRadius: radius.pill,
+    borderWidth: 1,
     height: sizes.iconBadge - 4,
     justifyContent: "center",
     width: sizes.iconBadge - 4,
@@ -158,7 +166,6 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   progressFill: {
-    backgroundColor: colors.surface.inverse,
     borderRadius: radius.pill,
     height: "100%",
   },

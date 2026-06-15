@@ -1,7 +1,16 @@
 import { StatusBar } from "expo-status-bar";
 import { ArrowLeft, SearchCheck } from "lucide-react-native";
+import { useEffect } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { ActivityIndicator } from "react-native-paper";
+import Animated, {
+  Easing,
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from "react-native-reanimated";
 
 import { colors } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
@@ -18,6 +27,27 @@ export function FindingRecommendationsScreen({
   hobby,
   onCancel,
 }: FindingRecommendationsScreenProps) {
+  const pulse = useSharedValue(0);
+
+  useEffect(() => {
+    pulse.value = withRepeat(
+      withTiming(1, {
+        duration: 1400,
+        easing: Easing.inOut(Easing.cubic),
+      }),
+      -1,
+      true,
+    );
+  }, [pulse]);
+
+  const badgeStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: interpolate(pulse.value, [0, 1], [0.96, 1.08]) }],
+  }));
+  const glowStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(pulse.value, [0, 1], [0.28, 0.55]),
+    transform: [{ scale: interpolate(pulse.value, [0, 1], [0.92, 1.12]) }, { rotate: "-12deg" }],
+  }));
+
   return (
     <ScrollView contentContainerStyle={styles.findingContainer}>
       <StatusBar style="dark" />
@@ -32,10 +62,10 @@ export function FindingRecommendationsScreen({
       </Pressable>
 
       <View style={styles.findingPanel}>
-        <View style={styles.findingGlow} />
-        <View style={styles.findingIconBadge}>
+        <Animated.View style={[styles.findingGlow, glowStyle]} />
+        <Animated.View style={[styles.findingIconBadge, badgeStyle]}>
           <SearchCheck color={colors.surface.inverse} size={30} strokeWidth={2.4} />
-        </View>
+        </Animated.View>
         <Text style={styles.findingEyebrow}>Finding recommendations</Text>
         <Text style={styles.findingTitle}>Looking for the best starting point for {hobby}.</Text>
         <Text style={styles.findingText}>

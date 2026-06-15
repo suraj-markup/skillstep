@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { registerPlanController } from "./controllers";
 import { type AiProvider, MockAiProvider } from "./providers/ai";
+import { NoopVideoProvider, type VideoProvider } from "./providers/video";
 import { NoopPlanRepository, type PlanRepository } from "./repositories";
 import { PlanService } from "./services";
 
@@ -13,12 +14,14 @@ import { PlanService } from "./services";
 export interface AppDependencies {
   aiProvider?: AiProvider;
   planRepository?: PlanRepository;
+  videoProvider?: VideoProvider;
 }
 
 export function createApp(dependencies: AppDependencies = {}) {
   const aiProvider = dependencies.aiProvider ?? new MockAiProvider();
   const planRepository = dependencies.planRepository ?? new NoopPlanRepository();
-  const planService = new PlanService({ aiProvider, planRepository });
+  const videoProvider = dependencies.videoProvider ?? new NoopVideoProvider();
+  const planService = new PlanService({ aiProvider, planRepository, videoProvider });
   const app = new Hono().basePath("/api");
 
   app.use(

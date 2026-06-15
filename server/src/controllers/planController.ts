@@ -1,6 +1,7 @@
-import { GeneratePlanInputSchema } from "@skillstep/shared";
+import { GeneratePlanInputSchema, ResolveTechniqueContentInputSchema } from "@skillstep/shared";
 import type { Hono } from "hono";
 import { AiProviderError } from "../providers/ai";
+import { YouTubeProviderError } from "../providers/video";
 import { InvalidPlanOutputError, type PlanService } from "../services";
 
 export function registerPlanController(app: Hono, planService: PlanService) {
@@ -27,6 +28,35 @@ export function registerPlanController(app: Hono, planService: PlanService) {
             message: error.message,
             upstreamCode: error.upstreamCode,
             upstreamStatus: error.upstreamStatus,
+          },
+          502,
+        );
+      }
+
+      throw error;
+    }
+  });
+
+  app.post("/technique-content", async (c) => {
+    const body = await readJson(c.req.raw);
+    const input = ResolveTechniqueContentInputSchema.safeParse(body);
+
+    if (!input.success) {
+      return c.json(
+        { error: "Invalid technique content request", issues: input.error.issues },
+        400,
+      );
+    }
+
+    try {
+      const content = await planService.resolveTechniqueContent(input.data);
+      return c.json({ content });
+    } catch (error) {
+      if (error instanceof YouTubeProviderError) {
+        return c.json(
+          {
+            error: "Video provider request failed",
+            upstreamStatus: error.status,
           },
           502,
         );

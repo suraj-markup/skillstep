@@ -3,6 +3,10 @@ import {
   GeneratePlanInputSchema,
   type Plan,
   PlanSchema,
+  type ResolveTechniqueContentInput,
+  ResolveTechniqueContentInputSchema,
+  type TechniqueContent,
+  TechniqueContentSchema,
 } from "@skillstep/shared";
 import { ApiError } from "../core/ApiError";
 import type { HttpRequest } from "../core/FetchHttpRequest";
@@ -29,6 +33,27 @@ export class PlansService {
     }
 
     return plan.data;
+  }
+
+  async resolveTechniqueContent(input: ResolveTechniqueContentInput): Promise<TechniqueContent> {
+    const validInput = ResolveTechniqueContentInputSchema.parse(input);
+    const body = await this.request.request({
+      method: "POST",
+      url: "/technique-content",
+      body: validInput,
+    });
+    const content = TechniqueContentSchema.safeParse(readProperty(body, "content"));
+
+    if (!content.success) {
+      throw new ApiError(
+        "API returned invalid technique content",
+        { method: "POST", url: "/technique-content", body: validInput },
+        undefined,
+        content.error.issues,
+      );
+    }
+
+    return content.data;
   }
 }
 
