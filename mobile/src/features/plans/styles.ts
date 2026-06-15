@@ -83,6 +83,132 @@ export const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "700",
   },
+  findingContainer: {
+    backgroundColor: colors.background,
+    flexGrow: 1,
+    gap: 18,
+    justifyContent: "center",
+    minHeight: "100%",
+    padding: 24,
+  },
+  findingPanel: {
+    alignItems: "flex-start",
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: 14,
+    padding: 22,
+  },
+  findingIconBadge: {
+    alignItems: "center",
+    backgroundColor: colors.sageWash,
+    borderColor: colors.sageBorder,
+    borderRadius: 999,
+    borderWidth: 1,
+    height: 56,
+    justifyContent: "center",
+    width: 56,
+  },
+  findingEyebrow: {
+    color: colors.clay,
+    fontSize: 13,
+    fontWeight: "800",
+    letterSpacing: 0,
+    textTransform: "uppercase",
+  },
+  findingTitle: {
+    color: colors.ink,
+    fontSize: 28,
+    fontWeight: "800",
+    lineHeight: 34,
+  },
+  findingText: {
+    color: colors.muted,
+    fontSize: 16,
+    lineHeight: 23,
+  },
+  findingCancelButton: {
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+    borderRadius: 8,
+  },
+  findingCancelContent: {
+    minHeight: 50,
+  },
+  findingCancelLabel: {
+    fontSize: 15,
+    fontWeight: "800",
+  },
+  searchShell: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 10,
+  },
+  searchInput: {
+    backgroundColor: colors.card,
+    flex: 1,
+    fontSize: 16,
+    height: 52,
+    minWidth: 0,
+  },
+  searchInputOutline: {
+    borderRadius: 8,
+  },
+  searchButton: {
+    backgroundColor: colors.sage,
+    borderRadius: 8,
+  },
+  searchButtonContent: {
+    minHeight: 52,
+    paddingHorizontal: 6,
+  },
+  searchButtonDisabled: {
+    opacity: 0.45,
+  },
+  searchButtonLabel: {
+    fontSize: 16,
+    fontWeight: "800",
+  },
+  hobbySection: {
+    gap: 12,
+  },
+  savedPlansSection: {
+    gap: 10,
+  },
+  sectionTitle: {
+    color: colors.ink,
+    fontSize: 18,
+    fontWeight: "800",
+  },
+  hobbyGrid: {
+    gap: 10,
+  },
+  hobbyCard: {
+    alignItems: "center",
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+    borderRadius: 8,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: 12,
+    minHeight: 88,
+    padding: 14,
+  },
+  hobbyCardTextStack: {
+    flex: 1,
+    gap: 4,
+  },
+  hobbyCardTitle: {
+    color: colors.ink,
+    fontSize: 17,
+    fontWeight: "800",
+  },
+  hobbyCardDescription: {
+    color: colors.muted,
+    fontSize: 14,
+    lineHeight: 20,
+  },
   planSwitcher: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -227,5 +353,59 @@ export const styles = StyleSheet.create({
     color: colors.muted,
     fontSize: 16,
     lineHeight: 23,
+  },
+  setupPanel: {
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: 16,
+    padding: 18,
+  },
+  setupField: {
+    gap: 8,
+  },
+  setupLabel: {
+    color: colors.ink,
+    fontSize: 15,
+    fontWeight: "800",
+  },
+  setupInput: {
+    backgroundColor: "#fffaf1",
+    fontSize: 16,
+    minHeight: 52,
+  },
+  setupInputOutline: {
+    borderRadius: 8,
+  },
+  setupInputMultiline: {
+    minHeight: 112,
+    textAlignVertical: "top",
+  },
+  setupActions: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  secondaryActionButton: {
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+    borderRadius: 8,
+    flex: 1,
+  },
+  actionButtonContent: {
+    minHeight: 52,
+  },
+  secondaryActionLabel: {
+    fontSize: 16,
+    fontWeight: "800",
+  },
+  primaryActionButton: {
+    backgroundColor: colors.sage,
+    borderRadius: 8,
+    flex: 1,
+  },
+  primaryActionLabel: {
+    fontSize: 16,
+    fontWeight: "800",
   },
 });

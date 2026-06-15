@@ -1,5 +1,6 @@
-import { TextInput } from "react-native";
+import { TextInput } from "react-native-paper";
 
+import { colors } from "../../../theme/colors";
 import { onboardingStyles } from "../styles";
 
 interface OnboardingTextInputProps {
@@ -19,12 +20,17 @@ export function OnboardingTextInput({
 }: OnboardingTextInputProps) {
   return (
     <TextInput
+      activeOutlineColor={colors.sage}
       keyboardType={keyboardType}
+      mode="outlined"
       multiline={multiline}
       onChangeText={onChangeText}
+      outlineColor="#d8c8af"
+      outlineStyle={onboardingStyles.inputOutline}
       placeholder={placeholder}
       placeholderTextColor="#9a8d7c"
       style={[onboardingStyles.input, multiline && onboardingStyles.multilineInput]}
+      textColor={colors.ink}
       value={value}
     />
   );

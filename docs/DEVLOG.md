@@ -185,3 +185,30 @@ A running journal of what was built, in what order, and what was decided along t
   SQLite, and then shows the saved plan dashboard.
 - Moved shared color tokens into `mobile/src/theme` so feature folders do not depend on
   each other's styling modules.
+
+## 2026-06-15 — M7: onboarding and hobby discovery split
+
+- Changed onboarding from immediate hobby-plan generation to a personal setup step that
+  asks for the user's name first.
+- Added local profile persistence in SQLite so the app can remember onboarding completion
+  and greet the user on the dashboard.
+- Added a hobby discovery dashboard with a top search bar and default popular hobby
+  cards.
+- Moved current level, target level, and weekly hours into a selected-hobby plan setup
+  screen, so the app asks those questions only after the user has chosen what they want
+  to improve.
+
+## 2026-06-15 — M7: saved user hobbies
+
+- Added local SQLite persistence for user-selected hobbies.
+- Selecting a default hobby or searching a custom hobby now saves it before opening plan
+  setup.
+- The dashboard now shows a "Your hobbies" section above the popular defaults when the
+  user has saved hobbies.
+
+## 2026-06-15 — M7: finding recommendations state
+
+- Added a focused "finding recommendations" screen for custom hobby searches.
+- Custom search now pauses briefly in this state before opening plan setup, giving us a
+  clear UX slot for the upcoming AI hobby recommendation endpoint.
+- Default hobby cards still open plan setup directly.

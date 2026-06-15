@@ -36,6 +36,24 @@ npm run dev:mobile         # Expo dev server — press "a" for Android emulator,
 The app also runs in a browser (`w` in the Expo CLI) via React Native Web — that's the
 "one codebase, phone and desktop" story (see docs/adr/0002).
 
+## Expo Go on your phone
+
+Your phone cannot use `localhost` to reach the API running on your laptop. Set the
+mobile API URL to your laptop's LAN IP before starting Expo:
+
+```bash
+EXPO_PUBLIC_API_BASE_URL=http://YOUR_LAPTOP_IP:8787/api npm run dev:mobile
+```
+
+Example:
+
+```bash
+EXPO_PUBLIC_API_BASE_URL=http://192.168.88.14:8787/api npm run dev:mobile
+```
+
+Keep `npm run dev:server` running in another terminal, keep your phone and laptop on the
+same Wi-Fi, then scan the Expo QR code with Expo Go.
+
 ## Gemini setup
 
 Add your Gemini key to the root `.env` file:

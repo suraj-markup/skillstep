@@ -1,4 +1,5 @@
-export const DEFAULT_API_BASE_URL = "http://localhost:8787/api";
+export const DEFAULT_API_BASE_URL =
+  process.env.EXPO_PUBLIC_API_BASE_URL ?? "http://localhost:8787/api";
 
 export type ApiHeaders =
   | Record<string, string>

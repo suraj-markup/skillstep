@@ -1,7 +1,9 @@
 export const DATABASE_NAME = "skillstep.db";
-export const DATABASE_VERSION = 1;
+export const DATABASE_VERSION = 3;
 
 export const TABLES = {
+  userProfile: "user_profile",
+  userHobbies: "user_hobbies",
   plans: "plans",
   techniques: "techniques",
   masteryCriteria: "mastery_criteria",
@@ -11,6 +13,22 @@ export const TABLES = {
 
 export const CREATE_INITIAL_SCHEMA_SQL = `
 PRAGMA foreign_keys = ON;
+
+CREATE TABLE IF NOT EXISTS user_profile (
+  id TEXT PRIMARY KEY NOT NULL,
+  name TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS user_hobbies (
+  id TEXT PRIMARY KEY NOT NULL,
+  name TEXT NOT NULL,
+  source TEXT NOT NULL,
+  icon TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
 
 CREATE TABLE IF NOT EXISTS plans (
   id TEXT PRIMARY KEY NOT NULL,

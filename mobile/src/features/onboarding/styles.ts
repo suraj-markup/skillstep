@@ -43,6 +43,16 @@ export const onboardingStyles = StyleSheet.create({
     gap: 18,
     padding: 18,
   },
+  iconCircle: {
+    alignItems: "center",
+    backgroundColor: colors.sageWash,
+    borderColor: colors.sageBorder,
+    borderRadius: 999,
+    borderWidth: 1,
+    height: 52,
+    justifyContent: "center",
+    width: 52,
+  },
   stepHeader: {
     gap: 10,
   },
@@ -77,15 +87,13 @@ export const onboardingStyles = StyleSheet.create({
   },
   input: {
     backgroundColor: "#fffaf1",
-    borderColor: "#d8c8af",
-    borderRadius: 8,
-    borderWidth: 1,
     color: colors.ink,
     fontSize: 17,
     lineHeight: 24,
     minHeight: 56,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+  },
+  inputOutline: {
+    borderRadius: 8,
   },
   multilineInput: {
     minHeight: 116,
@@ -159,11 +167,14 @@ export const onboardingStyles = StyleSheet.create({
     justifyContent: "center",
     minHeight: 52,
   },
-  primaryButtonDisabled: {
-    opacity: 0.45,
+  fullWidthPrimaryButton: {
+    backgroundColor: colors.sage,
+    borderRadius: 8,
   },
-  primaryButtonText: {
-    color: colors.card,
+  primaryButtonContent: {
+    minHeight: 52,
+  },
+  primaryButtonLabel: {
     fontSize: 16,
     fontWeight: "800",
   },

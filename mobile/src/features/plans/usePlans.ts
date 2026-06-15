@@ -12,7 +12,7 @@ import { getPlans, getTechniqueUserStates, savePlan } from "../../db";
 
 export interface UsePlansResult {
   errorMessage: string | null;
-  generatePlan: (input: GeneratePlanInput) => Promise<void>;
+  generatePlan: (input: GeneratePlanInput) => Promise<boolean>;
   isGenerating: boolean;
   isLoading: boolean;
   plans: Plan[];
@@ -106,8 +106,10 @@ export function usePlans(): UsePlansResult {
         await savePlan(plan);
         await refreshPlans();
         setSelectedPlanId(plan.id);
+        return true;
       } catch (error) {
         setErrorMessage(toErrorMessage(error));
+        return false;
       } finally {
         setIsGenerating(false);
       }
