@@ -1,0 +1,16 @@
+export const spacing = {
+  none: 0,
+  xxs: 2,
+  xs: 4,
+  sm: 6,
+  md: 8,
+  lg: 10,
+  xl: 12,
+  xxl: 14,
+  xxxl: 16,
+  panel: 18,
+  screen: 24,
+  screenBottom: 40,
+  onboardingTop: 64,
+  plansTop: 72,
+} as const;

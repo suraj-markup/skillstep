@@ -1,10 +1,13 @@
 import type { GeneratePlanInput } from "@skillstep/shared";
 import { Sparkles } from "lucide-react-native";
-import { ScrollView, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { Button, TextInput } from "react-native-paper";
 
 import { colors } from "../../../theme/colors";
-import { styles } from "../styles";
+import { radius } from "../../../theme/radius";
+import { sizes } from "../../../theme/sizes";
+import { spacing } from "../../../theme/spacing";
+import { typography } from "../../../theme/typography";
 import { usePlanSetupForm } from "../usePlanSetupForm";
 
 interface PlanSetupScreenProps {
@@ -116,23 +119,123 @@ function SetupField({
     <View style={styles.setupField}>
       <Text style={styles.setupLabel}>{label}</Text>
       <TextInput
-        activeOutlineColor={colors.sage}
+        activeOutlineColor={colors.action.primary}
         keyboardType={keyboardType}
         mode="outlined"
         multiline={multiline}
         numberOfLines={multiline ? 4 : 1}
         onChangeText={onChangeText}
-        outlineColor="#d8c8af"
+        outlineColor={colors.borders.default}
         outlineStyle={styles.setupInputOutline}
         placeholder={placeholder}
-        placeholderTextColor="#9a8d7c"
+        placeholderTextColor={colors.text.placeholder}
         style={[styles.setupInput, multiline && styles.setupInputMultiline]}
-        textColor={colors.ink}
+        textColor={colors.text.primary}
         value={value}
       />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: colors.surface.app,
+    flexGrow: 1,
+    gap: 20,
+    justifyContent: "flex-start",
+    minHeight: "100%",
+    padding: spacing.screen,
+    paddingBottom: spacing.screenBottom,
+    paddingTop: spacing.plansTop,
+  },
+  header: {
+    gap: spacing.xl,
+  },
+  eyebrow: {
+    color: colors.text.accent,
+    fontSize: typography.bodySmall.fontSize,
+    fontWeight: "700",
+    letterSpacing: 0,
+    textTransform: "uppercase",
+  },
+  title: {
+    ...typography.displayLarge,
+    color: colors.text.primary,
+  },
+  subtitle: {
+    ...typography.bodyLarge,
+    color: colors.text.muted,
+  },
+  notice: {
+    backgroundColor: colors.feedback.dangerBackground,
+    borderColor: colors.borders.danger,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    gap: spacing.xs,
+    padding: spacing.xxl,
+  },
+  noticeTitle: {
+    ...typography.labelMedium,
+    color: colors.feedback.dangerTitle,
+  },
+  noticeText: {
+    ...typography.bodyMedium,
+    color: colors.feedback.dangerText,
+    fontSize: typography.labelMedium.fontSize,
+  },
+  setupPanel: {
+    backgroundColor: colors.surface.card,
+    borderColor: colors.borders.default,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    gap: spacing.xxxl,
+    padding: spacing.panel,
+  },
+  setupField: {
+    gap: spacing.md,
+  },
+  setupLabel: {
+    color: colors.text.primary,
+    fontSize: typography.bodySmall.fontSize,
+    fontWeight: "800",
+  },
+  setupInput: {
+    backgroundColor: colors.surface.input,
+    fontSize: typography.bodyMedium.fontSize,
+    minHeight: sizes.buttonHeight,
+  },
+  setupInputOutline: {
+    borderRadius: radius.md,
+  },
+  setupInputMultiline: {
+    minHeight: 112,
+    textAlignVertical: "top",
+  },
+  setupActions: {
+    flexDirection: "row",
+    gap: spacing.lg,
+  },
+  secondaryActionButton: {
+    backgroundColor: colors.surface.card,
+    borderColor: colors.borders.default,
+    borderRadius: radius.md,
+    flex: 1,
+  },
+  actionButtonContent: {
+    minHeight: sizes.buttonHeight,
+  },
+  secondaryActionLabel: {
+    ...typography.button,
+  },
+  primaryActionButton: {
+    backgroundColor: colors.action.primary,
+    borderRadius: radius.md,
+    flex: 1,
+  },
+  primaryActionLabel: {
+    ...typography.button,
+  },
+});
 
 function SetupError({ message }: { message: string }) {
   return (

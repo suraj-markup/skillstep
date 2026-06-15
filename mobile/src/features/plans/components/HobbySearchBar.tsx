@@ -1,8 +1,12 @@
 import { Search } from "lucide-react-native";
-import { View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { Button, TextInput } from "react-native-paper";
 
-import { colors, styles } from "../styles";
+import { colors } from "../../../theme/colors";
+import { radius } from "../../../theme/radius";
+import { sizes } from "../../../theme/sizes";
+import { spacing } from "../../../theme/spacing";
+import { typography } from "../../../theme/typography";
 
 interface HobbySearchBarProps {
   onChangeText: (value: string) => void;
@@ -16,22 +20,24 @@ export function HobbySearchBar({ onChangeText, onSubmit, value }: HobbySearchBar
   return (
     <View style={styles.searchShell}>
       <TextInput
-        activeOutlineColor={colors.sage}
+        activeOutlineColor={colors.action.primary}
         left={
           <TextInput.Icon
-            icon={({ size }) => <Search color={colors.tan} size={size} strokeWidth={2.4} />}
+            icon={({ size }) => (
+              <Search color={colors.text.tertiary} size={size} strokeWidth={2.4} />
+            )}
           />
         }
         mode="outlined"
         onChangeText={onChangeText}
         onSubmitEditing={onSubmit}
-        outlineColor={colors.border}
+        outlineColor={colors.borders.default}
         outlineStyle={styles.searchInputOutline}
         placeholder="Search any hobby"
-        placeholderTextColor="#9a8d7c"
+        placeholderTextColor={colors.text.placeholder}
         returnKeyType="go"
         style={styles.searchInput}
-        textColor={colors.ink}
+        textColor={colors.text.primary}
         value={value}
       />
       <Button
@@ -47,3 +53,32 @@ export function HobbySearchBar({ onChangeText, onSubmit, value }: HobbySearchBar
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  searchShell: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.lg,
+  },
+  searchInput: {
+    backgroundColor: colors.surface.card,
+    flex: 1,
+    fontSize: typography.bodyMedium.fontSize,
+    height: sizes.buttonHeight,
+    minWidth: 0,
+  },
+  searchInputOutline: {
+    borderRadius: radius.md,
+  },
+  searchButton: {
+    backgroundColor: colors.action.primary,
+    borderRadius: radius.md,
+  },
+  searchButtonContent: {
+    minHeight: sizes.buttonHeight,
+    paddingHorizontal: spacing.sm,
+  },
+  searchButtonLabel: {
+    ...typography.button,
+  },
+});

@@ -1,6 +1,6 @@
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useEffect, useState } from "react";
-import { ScrollView, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 import {
   getUserHobbies,
@@ -10,6 +10,9 @@ import {
   type UserHobby,
   type UserProfile,
 } from "../../../db";
+import { colors } from "../../../theme/colors";
+import { spacing } from "../../../theme/spacing";
+import { typography } from "../../../theme/typography";
 import { OnboardingScreen } from "../../onboarding/screens/OnboardingScreen";
 import { HobbyCard } from "../components/HobbyCard";
 import { HobbySearchBar } from "../components/HobbySearchBar";
@@ -18,7 +21,6 @@ import { PlanCard } from "../components/PlanCard";
 import { PlanChip } from "../components/PlanChip";
 import { StatusNotice } from "../components/StatusNotice";
 import { DEFAULT_HOBBIES } from "../defaultHobbies";
-import { styles } from "../styles";
 import { usePlans } from "../usePlans";
 import { FindingRecommendationsScreen } from "./FindingRecommendationsScreen";
 import { PlanSetupScreen } from "./PlanSetupScreen";
@@ -249,3 +251,52 @@ export function PlansHomeScreen() {
     </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: colors.surface.app,
+    flexGrow: 1,
+    gap: 20,
+    justifyContent: "flex-start",
+    minHeight: "100%",
+    padding: spacing.screen,
+    paddingBottom: spacing.screenBottom,
+    paddingTop: spacing.plansTop,
+  },
+  header: {
+    gap: spacing.xl,
+  },
+  eyebrow: {
+    color: colors.text.accent,
+    fontSize: typography.bodySmall.fontSize,
+    fontWeight: "700",
+    letterSpacing: 0,
+    textTransform: "uppercase",
+  },
+  title: {
+    ...typography.displayLarge,
+    color: colors.text.primary,
+  },
+  subtitle: {
+    ...typography.bodyLarge,
+    color: colors.text.muted,
+  },
+  hobbySection: {
+    gap: spacing.xl,
+  },
+  savedPlansSection: {
+    gap: spacing.lg,
+  },
+  sectionTitle: {
+    ...typography.titleSmall,
+    color: colors.text.primary,
+  },
+  hobbyGrid: {
+    gap: spacing.lg,
+  },
+  planSwitcher: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.md,
+  },
+});

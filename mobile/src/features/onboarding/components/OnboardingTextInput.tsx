@@ -1,7 +1,9 @@
+import { StyleSheet } from "react-native";
 import { TextInput } from "react-native-paper";
 
 import { colors } from "../../../theme/colors";
-import { onboardingStyles } from "../styles";
+import { radius } from "../../../theme/radius";
+import { typography } from "../../../theme/typography";
 
 interface OnboardingTextInputProps {
   keyboardType?: "default" | "numeric";
@@ -20,18 +22,34 @@ export function OnboardingTextInput({
 }: OnboardingTextInputProps) {
   return (
     <TextInput
-      activeOutlineColor={colors.sage}
+      activeOutlineColor={colors.action.primary}
       keyboardType={keyboardType}
       mode="outlined"
       multiline={multiline}
       onChangeText={onChangeText}
-      outlineColor="#d8c8af"
-      outlineStyle={onboardingStyles.inputOutline}
+      outlineColor={colors.borders.default}
+      outlineStyle={styles.inputOutline}
       placeholder={placeholder}
-      placeholderTextColor="#9a8d7c"
-      style={[onboardingStyles.input, multiline && onboardingStyles.multilineInput]}
-      textColor={colors.ink}
+      placeholderTextColor={colors.text.placeholder}
+      style={[styles.input, multiline && styles.multilineInput]}
+      textColor={colors.text.primary}
       value={value}
     />
   );
 }
+
+const styles = StyleSheet.create({
+  input: {
+    ...typography.bodyLarge,
+    backgroundColor: colors.surface.input,
+    color: colors.text.primary,
+    minHeight: 56,
+  },
+  inputOutline: {
+    borderRadius: radius.md,
+  },
+  multilineInput: {
+    minHeight: 116,
+    textAlignVertical: "top",
+  },
+});

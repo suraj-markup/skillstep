@@ -1,4 +1,4 @@
-export const colors = {
+const palette = {
   background: "#f7f3ea",
   border: "#dacdb8",
   card: "#fffdf8",
@@ -7,12 +7,60 @@ export const colors = {
   dangerText: "#71381f",
   dangerTitle: "#8a3f20",
   dangerWash: "#fff1e8",
+  divider: "#ebe1d1",
   ink: "#1f2933",
+  input: "#fffaf1",
   muted: "#56616f",
+  placeholder: "#9a8d7c",
   sage: "#256c63",
   sageBorder: "#b9d7cd",
+  sageSoftBorder: "#c7d8cf",
   sageText: "#2e625b",
   sageWash: "#e4f1ea",
+  subtleInk: "#46515e",
+  techniqueWash: "#eee5d7",
+  techniqueMeta: "#687381",
   tan: "#7d6b57",
   track: "#e8dfcf",
+} as const;
+
+export const colors = {
+  ...palette,
+  action: {
+    primary: palette.sage,
+    primaryText: palette.card,
+    secondary: palette.card,
+  },
+  borders: {
+    default: palette.border,
+    danger: palette.dangerBorder,
+    divider: palette.divider,
+    selected: palette.sageSoftBorder,
+    success: palette.sageBorder,
+  },
+  feedback: {
+    dangerBackground: palette.dangerWash,
+    dangerText: palette.dangerText,
+    dangerTitle: palette.dangerTitle,
+  },
+  surface: {
+    app: palette.background,
+    card: palette.card,
+    input: palette.input,
+    inverse: palette.ink,
+    progressTrack: palette.track,
+    successSoft: palette.sageWash,
+    techniqueBadge: palette.techniqueWash,
+  },
+  text: {
+    accent: palette.clay,
+    body: palette.subtleInk,
+    brand: palette.sage,
+    inverse: palette.card,
+    muted: palette.muted,
+    placeholder: palette.placeholder,
+    primary: palette.ink,
+    success: palette.sageText,
+    tertiary: palette.tan,
+  },
 } as const;
