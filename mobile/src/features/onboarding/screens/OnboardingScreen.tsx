@@ -129,8 +129,8 @@ function DiscoverStep({ onBack, onNext }: { onBack: () => void; onNext: () => vo
           <Text style={styles.stepMeta}>Find your thing</Text>
           <Text style={styles.discoverTitle}>Pick a hobby that fits your life</Text>
           <Text style={styles.discoverHint}>
-            Start from popular ideas or search anything you want to practice. Skillstep turns it
-            into small daily steps you can actually keep.
+            Choose your first hobby, then add more anytime. Skillstep turns each one into small
+            daily steps you can actually keep.
           </Text>
         </View>
       </View>

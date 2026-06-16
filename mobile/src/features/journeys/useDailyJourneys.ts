@@ -1,4 +1,5 @@
 import type {
+  CardDifficulty,
   DailySession,
   GenerateJourneyInput,
   HobbyProfile,
@@ -15,6 +16,7 @@ import {
   getAvailableSessions,
   getDuePracticeCards,
   getHobbyProfiles,
+  recordPracticeCardReview,
   saveGeneratedJourney,
   saveSessionReflection,
   updateDailySessionStatus,
@@ -29,6 +31,11 @@ export interface UseDailyJourneysResult {
   isGenerating: boolean;
   isLoading: boolean;
   refresh: () => Promise<void>;
+  reviewCard: (
+    cardId: string,
+    difficulty: Exclude<CardDifficulty, "new">,
+    wasCorrect: boolean,
+  ) => Promise<void>;
   saveReflection: (reflection: SessionReflection) => Promise<void>;
   todaySessions: DailySession[];
   updateSessionStatus: (sessionId: string, status: SessionStatus) => Promise<void>;
@@ -127,6 +134,20 @@ export function useDailyJourneys(): UseDailyJourneysResult {
     [refresh],
   );
 
+  const reviewCard = useCallback(
+    async (cardId: string, difficulty: Exclude<CardDifficulty, "new">, wasCorrect: boolean) => {
+      setErrorMessage(null);
+
+      try {
+        await recordPracticeCardReview(cardId, difficulty, wasCorrect);
+        await refresh();
+      } catch (error) {
+        setErrorMessage(toErrorMessage(error));
+      }
+    },
+    [refresh],
+  );
+
   return useMemo(
     () => ({
       activeJourneys,
@@ -137,6 +158,7 @@ export function useDailyJourneys(): UseDailyJourneysResult {
       isGenerating,
       isLoading,
       refresh,
+      reviewCard,
       saveReflection,
       todaySessions,
       updateSessionStatus,
@@ -150,6 +172,7 @@ export function useDailyJourneys(): UseDailyJourneysResult {
       isGenerating,
       isLoading,
       refresh,
+      reviewCard,
       saveReflection,
       todaySessions,
       updateSessionStatus,
