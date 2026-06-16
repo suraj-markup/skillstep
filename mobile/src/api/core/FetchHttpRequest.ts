@@ -50,8 +50,23 @@ async function readJson(response: Response): Promise<unknown> {
 }
 
 function readErrorMessage(body: unknown): string {
-  const message = readProperty(body, "error");
-  return typeof message === "string" ? message : "API request failed";
+  const detail = readProperty(body, "message");
+  const title = readProperty(body, "error");
+  const upstreamStatus = readProperty(body, "upstreamStatus");
+
+  if (upstreamStatus === 429 || upstreamStatus === 503) {
+    return "AI is busy right now. Please try again in a minute.";
+  }
+
+  if (upstreamStatus === 504) {
+    return "AI took too long to respond. Please try again.";
+  }
+
+  if (typeof detail === "string") {
+    return typeof title === "string" ? `${title}: ${detail}` : detail;
+  }
+
+  return typeof title === "string" ? title : "API request failed";
 }
 
 function readProperty(body: unknown, key: string): unknown {
