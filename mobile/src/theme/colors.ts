@@ -27,8 +27,6 @@ const palette = {
   sunBorder: "#e5d596",
   sunText: "#766421",
   sunWash: "#f6efc9",
-  techniqueWash: "#eee5d7",
-  techniqueMeta: "#687381",
   tan: "#7d6b57",
   track: "#e8dfcf",
 } as const;
@@ -59,7 +57,6 @@ export const colors = {
     inverse: palette.ink,
     progressTrack: palette.track,
     successSoft: palette.sageWash,
-    techniqueBadge: palette.techniqueWash,
   },
   hobby: {
     clay: {

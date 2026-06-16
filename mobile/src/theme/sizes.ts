@@ -5,5 +5,4 @@ export const sizes = {
   iconCircle: 52,
   findingIconCircle: 56,
   progressHeight: 8,
-  techniqueIndex: 32,
 } as const;

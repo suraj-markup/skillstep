@@ -1,4 +1,4 @@
-import type { PlanIcon } from "@skillstep/shared";
+import type { HobbyIcon } from "@skillstep/shared";
 import {
   Bike,
   BookOpen,
@@ -38,15 +38,15 @@ export type IconComponent = ComponentType<{
   strokeWidth?: number;
 }>;
 
-export const planIcons: Record<PlanIcon, IconComponent> = {
+export const hobbyIcons: Record<HobbyIcon, IconComponent> = {
   art: Palette,
   book: BookOpen,
   camera: Camera,
   cards: Club,
   cars: Car,
+  coffee: Coffee,
   content: Clapperboard,
   cooking: CookingPot,
-  coffee: Coffee,
   cycling: Bike,
   dance: Footprints,
   design: PenTool,
@@ -61,8 +61,8 @@ export const planIcons: Record<PlanIcon, IconComponent> = {
   singing: MicVocal,
   sparkles: Sparkles,
   sports: Volleyball,
-  swimming: Waves,
   strategy: Crown,
+  swimming: Waves,
   tennis: Trophy,
   travel: Plane,
   video: Video,
