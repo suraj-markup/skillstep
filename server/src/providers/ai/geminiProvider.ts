@@ -5,11 +5,14 @@ import {
   GeneratedJourneySchema,
   type GenerateJourneyInput,
   HOBBY_ICONS,
+  PRACTICE_CARD_TYPES,
+  resolveHobbyIcon,
 } from "@skillstep/shared";
 import { type AiProvider, AiProviderError } from "./provider";
 
 const GEMINI_REQUEST_TIMEOUT_MS = 45_000;
 const GEMINI_RETRY_DELAYS_MS = [900, 1800];
+const GEMINI_MAX_OUTPUT_TOKENS = 12_000;
 const STARTER_SESSION_COUNT = 3;
 
 export interface GeminiProviderOptions {
@@ -38,9 +41,12 @@ export class GeminiProvider implements AiProvider {
 
     const payload = (await response.json()) as GeminiGenerateContentResponse;
     const text = extractText(payload);
-    const parsed = GeneratedJourneySchema.safeParse(safeJsonParse(text));
+    const parsed = GeneratedJourneySchema.safeParse(
+      normalizeGeneratedJourneyOutput(safeJsonParse(text), input),
+    );
 
     if (!parsed.success) {
+      console.error("Gemini generated invalid journey", parsed.error.issues);
       throw new AiProviderError(
         "AI generated a journey in an invalid format. Please try again.",
         502,
@@ -99,7 +105,7 @@ async function requestGemini({
       body: JSON.stringify({
         contents: [{ parts: [{ text: buildJourneyPrompt(input) }] }],
         generationConfig: {
-          maxOutputTokens: 6000,
+          maxOutputTokens: GEMINI_MAX_OUTPUT_TOKENS,
           responseJsonSchema: buildStarterJourneyJsonSchema(),
           responseMimeType: "application/json",
         },
@@ -172,7 +178,8 @@ Rules:
 - Each session must include Learn, Resource, Practice, Check Yourself, and Reflect.
 - Sessions must be small enough for ${input.minutesPerDay} minutes.
 - Generate exactly 1 practice card per session.
-- Use a mix of card types across the journey: concept, quiz, drill, mistake, challenge, review.
+- Use a varied subset of these card types across the journey: concept, quiz, drill,
+  mistake, challenge, review.
 - Cards must help the user do the hobby, not memorize generic trivia.
 - Use resource.type "video" when a visual demo would help the session.
 - Include 1 final project and 3 next journey suggestions.
@@ -260,11 +267,49 @@ function extractText(response: GeminiGenerateContentResponse): string {
 }
 
 function safeJsonParse(text: string): unknown {
+  const normalizedText = text.trim();
+  const candidates = [
+    normalizedText,
+    stripJsonCodeFence(normalizedText),
+    extractJsonObjectText(normalizedText),
+  ];
+
+  for (const candidate of candidates) {
+    if (!candidate) {
+      continue;
+    }
+
+    const parsed = parseJson(candidate);
+    if (parsed !== undefined) {
+      return parsed;
+    }
+  }
+
+  return undefined;
+}
+
+function parseJson(text: string): unknown {
   try {
     return JSON.parse(text);
   } catch {
     return undefined;
   }
+}
+
+function stripJsonCodeFence(text: string): string | undefined {
+  const match = text.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  return match?.[1]?.trim();
+}
+
+function extractJsonObjectText(text: string): string | undefined {
+  const startIndex = text.indexOf("{");
+  const endIndex = text.lastIndexOf("}");
+
+  if (startIndex === -1 || endIndex <= startIndex) {
+    return undefined;
+  }
+
+  return text.slice(startIndex, endIndex + 1);
 }
 
 function readString(body: unknown, key: string): string | undefined {
@@ -274,6 +319,212 @@ function readString(body: unknown, key: string): string | undefined {
 
 function readProperty(body: unknown, key: string): unknown {
   return typeof body === "object" && body !== null ? body[key as keyof typeof body] : undefined;
+}
+
+function normalizeGeneratedJourneyOutput(value: unknown, input: GenerateJourneyInput): unknown {
+  if (!isRecord(value)) {
+    return value;
+  }
+
+  const hobbyProfile = normalizeHobbyProfile(readRecord(value, "hobbyProfile"), input);
+  const journey = normalizeJourney(readRecord(value, "journey"), hobbyProfile);
+  const sessions = readArray(value, "sessions").map((session, index) =>
+    normalizeSession(session, index, hobbyProfile, journey),
+  );
+  const practiceCards = readArray(value, "practiceCards").map((card, index) =>
+    normalizePracticeCard(card, index, hobbyProfile, journey, sessions),
+  );
+  const projects = readArray(value, "projects").map((project) =>
+    normalizeProject(project, hobbyProfile, journey),
+  );
+
+  return {
+    ...value,
+    hobbyProfile,
+    journey,
+    sessions,
+    practiceCards,
+    projects,
+  };
+}
+
+function normalizeHobbyProfile(
+  value: Record<string, unknown>,
+  input: GenerateJourneyInput,
+): Record<string, unknown> {
+  return {
+    ...value,
+    icon: oneOf(value.icon, HOBBY_ICONS, resolveHobbyIcon(input.hobby)),
+    accent: oneOf(value.accent, ACCENTS, "amber"),
+    status: "active",
+    preferredMinutesPerDay: toPositiveInteger(value.preferredMinutesPerDay, input.minutesPerDay),
+    preferredDaysPerWeek: toPositiveInteger(value.preferredDaysPerWeek, input.daysPerWeek),
+    preferredLearningStyle: input.learningStyle,
+  };
+}
+
+function normalizeJourney(
+  value: Record<string, unknown>,
+  hobbyProfile: Record<string, unknown>,
+): Record<string, unknown> {
+  return {
+    ...value,
+    hobbyProfileId: readRequiredString(hobbyProfile.id, value.hobbyProfileId),
+    status: "active",
+    durationWeeks: toPositiveInteger(value.durationWeeks, 1),
+    totalSessions: toPositiveInteger(value.totalSessions, 3),
+    currentSessionIndex: toNonnegativeInteger(value.currentSessionIndex, 0),
+    completedAt: nullableString(value.completedAt),
+    finalProject: isEmptyNullable(value.finalProject) ? null : value.finalProject,
+  };
+}
+
+function normalizeSession(
+  value: unknown,
+  index: number,
+  hobbyProfile: Record<string, unknown>,
+  journey: Record<string, unknown>,
+): Record<string, unknown> {
+  const session = isRecord(value) ? value : {};
+
+  return {
+    ...session,
+    hobbyProfileId: readRequiredString(hobbyProfile.id, session.hobbyProfileId),
+    journeyId: readRequiredString(journey.id, session.journeyId),
+    dayNumber: toPositiveInteger(session.dayNumber, index + 1),
+    estimatedMinutes: toPositiveInteger(session.estimatedMinutes, 20),
+    scheduledFor: nullableString(session.scheduledFor),
+    status: oneOf(
+      session.status,
+      ["locked", "available", "in_progress", "completed", "skipped", "missed"],
+      index === 0 ? "available" : "locked",
+    ),
+    resource: normalizeResource(session.resource),
+    startedAt: nullableString(session.startedAt),
+    completedAt: nullableString(session.completedAt),
+  };
+}
+
+function normalizePracticeCard(
+  value: unknown,
+  index: number,
+  hobbyProfile: Record<string, unknown>,
+  journey: Record<string, unknown>,
+  sessions: Array<Record<string, unknown>>,
+): Record<string, unknown> {
+  const card = isRecord(value) ? value : {};
+  const session = sessions[index] ?? sessions[0] ?? {};
+  const fallbackType = PRACTICE_CARD_TYPES[index % PRACTICE_CARD_TYPES.length] ?? "concept";
+
+  return {
+    ...card,
+    hobbyProfileId: readRequiredString(hobbyProfile.id, card.hobbyProfileId),
+    journeyId: readRequiredString(journey.id, card.journeyId),
+    sessionId: readRequiredString(session.id, card.sessionId),
+    type: oneOf(card.type, PRACTICE_CARD_TYPES, fallbackType),
+    prompt: nullableString(card.prompt),
+    answer: nullableString(card.answer),
+    difficulty: "new",
+    lastReviewedAt: nullableString(card.lastReviewedAt),
+    reviewCount: toNonnegativeInteger(card.reviewCount, 0),
+    correctCount: toNonnegativeInteger(card.correctCount, 0),
+    status: "new",
+  };
+}
+
+function normalizeProject(
+  value: unknown,
+  hobbyProfile: Record<string, unknown>,
+  journey: Record<string, unknown>,
+): Record<string, unknown> {
+  const project = isRecord(value) ? value : {};
+
+  return {
+    ...project,
+    hobbyProfileId: readRequiredString(hobbyProfile.id, project.hobbyProfileId),
+    journeyId: readRequiredString(journey.id, project.journeyId),
+    status: "not_started",
+    completedAt: nullableString(project.completedAt),
+  };
+}
+
+function normalizeResource(value: unknown): unknown {
+  if (isEmptyNullable(value)) {
+    return null;
+  }
+
+  if (!isRecord(value)) {
+    return value;
+  }
+
+  const resource: Record<string, unknown> = { ...value };
+
+  if (typeof resource.url !== "string" || !isValidUrl(resource.url)) {
+    delete resource.url;
+  }
+
+  const durationMinutes = toOptionalPositiveInteger(resource.durationMinutes);
+  if (durationMinutes === undefined) {
+    delete resource.durationMinutes;
+  } else {
+    resource.durationMinutes = durationMinutes;
+  }
+
+  return resource;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function readRecord(value: Record<string, unknown>, key: string): Record<string, unknown> {
+  const property = value[key];
+  return isRecord(property) ? property : {};
+}
+
+function readArray(value: Record<string, unknown>, key: string): unknown[] {
+  const property = value[key];
+  return Array.isArray(property) ? property : [];
+}
+
+function readRequiredString(preferred: unknown, fallback: unknown): unknown {
+  return typeof preferred === "string" && preferred.trim() ? preferred : fallback;
+}
+
+function nullableString(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value : null;
+}
+
+function isEmptyNullable(value: unknown): boolean {
+  return value === undefined || value === null || (typeof value === "string" && !value.trim());
+}
+
+function oneOf<T extends string>(value: unknown, allowed: readonly T[], fallback: T): T {
+  return typeof value === "string" && allowed.includes(value as T) ? (value as T) : fallback;
+}
+
+function toPositiveInteger(value: unknown, fallback: number): number {
+  const parsed = typeof value === "string" ? Number(value) : value;
+  return typeof parsed === "number" && Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function toNonnegativeInteger(value: unknown, fallback: number): number {
+  const parsed = typeof value === "string" ? Number(value) : value;
+  return typeof parsed === "number" && Number.isInteger(parsed) && parsed >= 0 ? parsed : fallback;
+}
+
+function toOptionalPositiveInteger(value: unknown): number | undefined {
+  const parsed = typeof value === "string" ? Number(value) : value;
+  return typeof parsed === "number" && Number.isInteger(parsed) && parsed > 0 ? parsed : undefined;
+}
+
+function isValidUrl(value: string): boolean {
+  try {
+    new URL(value);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 interface GeminiGenerateContentResponse {
