@@ -4,14 +4,14 @@ import { z } from "zod";
  * Bump when the persisted shape changes; the app's hydration layer uses this
  * to run migrations instead of crashing on stale state (ADR 0004).
  */
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 /** Hobby accent palette — names map to tokens in the app's theme. */
 export const ACCENTS = ["amber", "sage", "sky", "rose", "violet", "clay"] as const;
 export const AccentSchema = z.enum(ACCENTS);
 export type Accent = z.infer<typeof AccentSchema>;
 
-export const PLAN_ICONS = [
+export const HOBBY_ICONS = [
   "sparkles",
   "strategy",
   "cooking",
@@ -42,120 +42,222 @@ export const PLAN_ICONS = [
   "sports",
   "cars",
 ] as const;
-export const PlanIconSchema = z.enum(PLAN_ICONS);
-export type PlanIcon = z.infer<typeof PlanIconSchema>;
+export const HobbyIconSchema = z.enum(HOBBY_ICONS);
+export type HobbyIcon = z.infer<typeof HobbyIconSchema>;
 
-/**
- * How much a learning format matters for a given technique. The AI sets this
- * per technique; the UI weights its Watch / Read / Practice sections by it.
- * This is what makes guitar video-led and poker theory reading-led — format
- * is a decision, never a fixed template.
- */
-export const EmphasisSchema = z.enum(["primary", "supporting", "none"]);
-export type Emphasis = z.infer<typeof EmphasisSchema>;
+export const HOBBY_PROFILE_STATUSES = ["active", "paused", "completed", "archived"] as const;
+export const HobbyProfileStatusSchema = z.enum(HOBBY_PROFILE_STATUSES);
+export type HobbyProfileStatus = z.infer<typeof HobbyProfileStatusSchema>;
 
-export const ModalityProfileSchema = z.object({
-  video: EmphasisSchema,
-  reading: EmphasisSchema,
-  practice: EmphasisSchema,
-});
-export type ModalityProfile = z.infer<typeof ModalityProfileSchema>;
+export const LEARNING_STYLES = ["balanced", "video", "reading", "practice", "projects"] as const;
+export const LearningStyleSchema = z.enum(LEARNING_STYLES);
+export type LearningStyle = z.infer<typeof LearningStyleSchema>;
 
-/**
- * An observable, self-assessed "I can do X" statement. Checking these is what
- * makes mastering a technique mean something — they are assessments of doing,
- * never quiz questions.
- */
-export const MasteryCriterionSchema = z.object({
+export const HobbyProfileSchema = z.object({
   id: z.string().min(1),
-  text: z.string().min(1).max(200),
+  name: z.string().min(1).max(60),
+  icon: HobbyIconSchema,
+  accent: AccentSchema,
+  currentLevel: z.string().min(1).max(160),
+  goal: z.string().min(1).max(240),
+  status: HobbyProfileStatusSchema,
+  preferredMinutesPerDay: z.number().int().positive().max(240),
+  preferredDaysPerWeek: z.number().int().positive().max(7),
+  preferredLearningStyle: LearningStyleSchema,
+  createdAt: z.string().min(1),
+  updatedAt: z.string().min(1),
 });
-export type MasteryCriterion = z.infer<typeof MasteryCriterionSchema>;
+export type HobbyProfile = z.infer<typeof HobbyProfileSchema>;
 
-/** One concrete, repeatable practice assignment, sized to the user's time. */
-export const DrillSchema = z.object({
-  text: z.string().min(1).max(600),
-  minutesPerSession: z.number().int().positive().max(240),
-  sessionsPerWeek: z.number().int().positive().max(14),
-});
-export type Drill = z.infer<typeof DrillSchema>;
+export const JOURNEY_STATUSES = [
+  "not_started",
+  "active",
+  "completed",
+  "paused",
+  "abandoned",
+] as const;
+export const JourneyStatusSchema = z.enum(JOURNEY_STATUSES);
+export type JourneyStatus = z.infer<typeof JourneyStatusSchema>;
 
-export const TechniqueSchema = z.object({
+export const JourneyMilestoneSchema = z.object({
   id: z.string().min(1),
-  name: z.string().min(1).max(120),
-  /** The one-line "why this, why now" shown on the technique card. */
-  whyItMatters: z.string().min(1).max(300),
-  modalityProfile: ModalityProfileSchema,
-  drill: DrillSchema,
-  masteryCriteria: z.array(MasteryCriterionSchema).min(2).max(4),
+  title: z.string().min(1).max(120),
+  description: z.string().min(1).max(360),
+  targetSessionNumber: z.number().int().positive().max(366),
 });
-export type Technique = z.infer<typeof TechniqueSchema>;
+export type JourneyMilestone = z.infer<typeof JourneyMilestoneSchema>;
 
-export const GeneratePlanInputSchema = z.object({
-  hobby: z.string().trim().min(1).max(60),
-  levelFrom: z.string().trim().min(1).max(160),
-  levelTo: z.string().trim().min(1).max(160),
-  weeklyHours: z.number().positive().max(60),
-});
-export type GeneratePlanInput = z.infer<typeof GeneratePlanInputSchema>;
-
-/**
- * The finite bridge between two skill levels: 5–8 techniques, no more.
- * The bounds are a product decision enforced at the schema level — an AI
- * response with 12 techniques is invalid output, not an extra-generous plan.
- */
-export const PlanSchema = z.object({
+export const FinalProjectBriefSchema = z.object({
   id: z.string().min(1),
-  hobby: z.string().min(1).max(60),
+  title: z.string().min(1).max(120),
+  description: z.string().min(1).max(800),
+  successCriteria: z.array(z.string().min(1).max(220)).min(1).max(5),
+});
+export type FinalProjectBrief = z.infer<typeof FinalProjectBriefSchema>;
+
+export const JourneySchema = z.object({
+  id: z.string().min(1),
+  hobbyProfileId: z.string().min(1),
+  title: z.string().min(1).max(120),
   levelFrom: z.string().min(1).max(160),
   levelTo: z.string().min(1).max(160),
-  weeklyHours: z.number().positive().max(60),
-  /** The AI's visible reasoning for why the plan looks the way it does. */
-  rationale: z.string().min(1).max(1200),
-  /** Controlled visual key; the mobile app maps it to a native icon component. */
-  icon: PlanIconSchema,
-  accent: AccentSchema,
-  techniques: z.array(TechniqueSchema).min(5).max(8),
+  goal: z.string().min(1).max(240),
+  status: JourneyStatusSchema,
+  durationWeeks: z.number().int().positive().max(52),
+  totalSessions: z.number().int().positive().max(366),
+  currentSessionIndex: z.number().int().nonnegative().max(366),
+  milestones: z.array(JourneyMilestoneSchema).max(12),
+  finalProject: FinalProjectBriefSchema.nullable(),
+  rationale: z.string().min(1).max(1600),
+  createdAt: z.string().min(1),
+  completedAt: z.string().min(1).nullable(),
+});
+export type Journey = z.infer<typeof JourneySchema>;
+
+export const SESSION_STATUSES = [
+  "locked",
+  "available",
+  "in_progress",
+  "completed",
+  "skipped",
+  "missed",
+] as const;
+export const SessionStatusSchema = z.enum(SESSION_STATUSES);
+export type SessionStatus = z.infer<typeof SessionStatusSchema>;
+
+export const SessionResourceSchema = z.object({
+  type: z.enum(["video", "article", "example", "image", "prompt"]),
+  title: z.string().min(1).max(160),
+  url: z.string().url().optional(),
+  description: z.string().min(1).max(500).optional(),
+  durationMinutes: z.number().int().positive().max(240).optional(),
+});
+export type SessionResource = z.infer<typeof SessionResourceSchema>;
+
+export const CheckYourselfSchema = z.object({
+  prompt: z.string().min(1).max(360),
+  items: z.array(z.string().min(1).max(220)).min(1).max(6),
+});
+export type CheckYourself = z.infer<typeof CheckYourselfSchema>;
+
+export const DailySessionSchema = z.object({
+  id: z.string().min(1),
+  journeyId: z.string().min(1),
+  hobbyProfileId: z.string().min(1),
+  dayNumber: z.number().int().positive().max(366),
+  title: z.string().min(1).max(120),
+  estimatedMinutes: z.number().int().positive().max(240),
+  scheduledFor: z.string().min(1).nullable(),
+  status: SessionStatusSchema,
+  learn: z.string().min(1).max(1200),
+  resource: SessionResourceSchema.nullable(),
+  practice: z.string().min(1).max(1200),
+  checkYourself: CheckYourselfSchema,
+  reflectionPrompt: z.string().min(1).max(300),
+  createdAt: z.string().min(1),
+  startedAt: z.string().min(1).nullable(),
+  completedAt: z.string().min(1).nullable(),
+});
+export type DailySession = z.infer<typeof DailySessionSchema>;
+
+export const REFLECTION_DIFFICULTIES = ["easy", "right", "hard"] as const;
+export const ReflectionDifficultySchema = z.enum(REFLECTION_DIFFICULTIES);
+export type ReflectionDifficulty = z.infer<typeof ReflectionDifficultySchema>;
+
+export const SessionReflectionSchema = z.object({
+  id: z.string().min(1),
+  sessionId: z.string().min(1),
+  hobbyProfileId: z.string().min(1),
+  journeyId: z.string().min(1),
+  difficulty: ReflectionDifficultySchema,
+  notes: z.string().max(1600),
+  feltEasy: z.string().max(500).nullable(),
+  feltHard: z.string().max(500).nullable(),
+  shouldRevisit: z.boolean(),
   createdAt: z.string().min(1),
 });
-export type Plan = z.infer<typeof PlanSchema>;
+export type SessionReflection = z.infer<typeof SessionReflectionSchema>;
 
-/** A real video resolved via the YouTube Data API — never invented by the LLM. */
-export const VideoResourceSchema = z.object({
-  videoId: z.string().min(1),
-  title: z.string().min(1),
-  channelTitle: z.string().min(1),
-  durationSec: z.number().int().nonnegative(),
+export const PRACTICE_CARD_TYPES = [
+  "concept",
+  "quiz",
+  "drill",
+  "mistake",
+  "challenge",
+  "review",
+] as const;
+export const PracticeCardTypeSchema = z.enum(PRACTICE_CARD_TYPES);
+export type PracticeCardType = z.infer<typeof PracticeCardTypeSchema>;
+
+export const CARD_DIFFICULTIES = ["new", "easy", "okay", "hard"] as const;
+export const CardDifficultySchema = z.enum(CARD_DIFFICULTIES);
+export type CardDifficulty = z.infer<typeof CardDifficultySchema>;
+
+export const PRACTICE_CARD_STATUSES = [
+  "new",
+  "due",
+  "learning",
+  "reviewing",
+  "mastered",
+  "archived",
+] as const;
+export const PracticeCardStatusSchema = z.enum(PRACTICE_CARD_STATUSES);
+export type PracticeCardStatus = z.infer<typeof PracticeCardStatusSchema>;
+
+export const PracticeCardSchema = z.object({
+  id: z.string().min(1),
+  hobbyProfileId: z.string().min(1),
+  journeyId: z.string().min(1),
+  sessionId: z.string().min(1),
+  type: PracticeCardTypeSchema,
+  front: z.string().min(1).max(500),
+  back: z.string().min(1).max(1200),
+  prompt: z.string().max(500).nullable(),
+  answer: z.string().max(1200).nullable(),
+  difficulty: CardDifficultySchema,
+  dueAt: z.string().min(1),
+  lastReviewedAt: z.string().min(1).nullable(),
+  reviewCount: z.number().int().nonnegative(),
+  correctCount: z.number().int().nonnegative(),
+  status: PracticeCardStatusSchema,
+  createdAt: z.string().min(1),
 });
-export type VideoResource = z.infer<typeof VideoResourceSchema>;
+export type PracticeCard = z.infer<typeof PracticeCardSchema>;
 
-export const TECHNIQUE_STATUSES = ["todo", "in_progress", "mastered", "struck"] as const;
-export const TechniqueStatusSchema = z.enum(TECHNIQUE_STATUSES);
-export type TechniqueStatus = z.infer<typeof TechniqueStatusSchema>;
+export const PROJECT_STATUSES = ["not_started", "in_progress", "completed", "skipped"] as const;
+export const ProjectStatusSchema = z.enum(PROJECT_STATUSES);
+export type ProjectStatus = z.infer<typeof ProjectStatusSchema>;
 
-/**
- * The user's relationship to one technique. Kept separate from the Technique
- * itself: AI content is immutable, user state is mutable, and the two never
- * share a write path (see "Data model and ownership" in ARCHITECTURE.md).
- */
-export const TechniqueUserStateSchema = z.object({
-  status: TechniqueStatusSchema,
-  /** ids of mastery criteria the user has checked off */
-  checkedCriteria: z.array(z.string()),
+export const ProjectSchema = z.object({
+  id: z.string().min(1),
+  hobbyProfileId: z.string().min(1),
+  journeyId: z.string().min(1),
+  title: z.string().min(1).max(120),
+  description: z.string().min(1).max(800),
+  successCriteria: z.array(z.string().min(1).max(220)).min(1).max(5),
+  status: ProjectStatusSchema,
+  createdAt: z.string().min(1),
+  completedAt: z.string().min(1).nullable(),
 });
-export type TechniqueUserState = z.infer<typeof TechniqueUserStateSchema>;
+export type Project = z.infer<typeof ProjectSchema>;
 
-/** Lazily fetched content, frozen onto the device after first open (ADR 0007). */
-export const TechniqueContentSchema = z.object({
-  videos: z.array(VideoResourceSchema).optional(),
-  /** Markdown primer written by the AI. */
-  primer: z.string().optional(),
-});
-export type TechniqueContent = z.infer<typeof TechniqueContentSchema>;
-
-export const ResolveTechniqueContentInputSchema = z.object({
-  drillText: z.string().min(1).max(600),
+export const GenerateJourneyInputSchema = z.object({
   hobby: z.string().trim().min(1).max(60),
-  techniqueName: z.string().trim().min(1).max(120),
+  currentLevel: z.string().trim().min(1).max(160),
+  goal: z.string().trim().min(1).max(240),
+  minutesPerDay: z.number().int().positive().max(240),
+  daysPerWeek: z.number().int().positive().max(7),
+  learningStyle: LearningStyleSchema,
+  existingHobbyContext: z.string().trim().max(1200).optional(),
 });
-export type ResolveTechniqueContentInput = z.infer<typeof ResolveTechniqueContentInputSchema>;
+export type GenerateJourneyInput = z.infer<typeof GenerateJourneyInputSchema>;
+
+export const GeneratedJourneySchema = z.object({
+  hobbyProfile: HobbyProfileSchema,
+  journey: JourneySchema,
+  sessions: z.array(DailySessionSchema).min(1).max(366),
+  practiceCards: z.array(PracticeCardSchema).max(1200),
+  projects: z.array(ProjectSchema).max(20),
+  nextJourneySuggestions: z.array(z.string().min(1).max(120)).min(1).max(5),
+});
+export type GeneratedJourney = z.infer<typeof GeneratedJourneySchema>;

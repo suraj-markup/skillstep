@@ -1,6 +1,6 @@
-import type { PlanIcon } from "./domain";
+import type { HobbyIcon } from "./domain";
 
-const EXACT_HOBBY_ICONS: Record<string, PlanIcon> = {
+const EXACT_HOBBY_ICONS: Record<string, HobbyIcon> = {
   basketball: "sports",
   chess: "strategy",
   "coffee brewing": "coffee",
@@ -26,7 +26,7 @@ const EXACT_HOBBY_ICONS: Record<string, PlanIcon> = {
   yoga: "yoga",
 };
 
-const HOBBY_ICON_RULES: Array<{ icon: PlanIcon; keywords: string[] }> = [
+const HOBBY_ICON_RULES: Array<{ icon: HobbyIcon; keywords: string[] }> = [
   { icon: "strategy", keywords: ["chess", "strategy", "board game", "sudoku"] },
   { icon: "cards", keywords: ["poker", "cards", "card game"] },
   { icon: "cooking", keywords: ["cook", "bake", "food", "recipe", "chef", "meal"] },
@@ -59,7 +59,7 @@ const HOBBY_ICON_RULES: Array<{ icon: PlanIcon; keywords: string[] }> = [
   { icon: "cars", keywords: ["car", "cars", "automobile", "driving"] },
 ];
 
-export function resolveHobbyIcon(hobby: string, fallback: PlanIcon = "sparkles"): PlanIcon {
+export function resolveHobbyIcon(hobby: string, fallback: HobbyIcon = "sparkles"): HobbyIcon {
   const normalizedHobby = normalizeHobbyText(hobby);
   const exactIcon = EXACT_HOBBY_ICONS[normalizedHobby];
 

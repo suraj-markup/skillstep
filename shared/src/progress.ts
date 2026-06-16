@@ -1,45 +1,60 @@
-import type { Plan, TechniqueUserState } from "./domain";
+import type { DailySession, PracticeCard } from "./domain";
 
-export interface ProgressSummary {
-  /** Techniques in the plan, struck or not. */
+export interface JourneyProgressSummary {
   total: number;
-  struck: number;
-  /** What the user is actually working with: total − struck. */
+  completed: number;
+  skipped: number;
+  missed: number;
   active: number;
-  mastered: number;
-  inProgress: number;
-  /** mastered / active, as a whole percentage. 0 when nothing is active. */
   percent: number;
+  nextSessionId: string | null;
 }
 
-/**
- * The one progress rule of the product: striking a technique removes it from
- * the denominator entirely. Skipping is curation, not failure — a plan with
- * 6 techniques, 1 struck and 5 mastered, is 100% complete.
- */
-export function computeProgress(
-  plan: Plan,
-  states: Record<string, TechniqueUserState | undefined>,
-): ProgressSummary {
-  let struck = 0;
-  let mastered = 0;
-  let inProgress = 0;
+export function computeJourneyProgress(sessions: DailySession[]): JourneyProgressSummary {
+  const orderedSessions = [...sessions].sort((first, second) => first.dayNumber - second.dayNumber);
+  let completed = 0;
+  let skipped = 0;
+  let missed = 0;
 
-  for (const technique of plan.techniques) {
-    const status = states[technique.id]?.status ?? "todo";
-    if (status === "struck") struck += 1;
-    else if (status === "mastered") mastered += 1;
-    else if (status === "in_progress") inProgress += 1;
+  for (const session of orderedSessions) {
+    if (session.status === "completed") completed += 1;
+    else if (session.status === "skipped") skipped += 1;
+    else if (session.status === "missed") missed += 1;
   }
 
-  const total = plan.techniques.length;
-  const active = total - struck;
-  const percent = active === 0 ? 0 : Math.round((mastered / active) * 100);
+  const total = orderedSessions.length;
+  const active = total - skipped;
+  const percent = active === 0 ? 0 : Math.round((completed / active) * 100);
+  const nextSession = orderedSessions.find((session) =>
+    ["available", "in_progress", "missed"].includes(session.status),
+  );
 
-  return { total, struck, active, mastered, inProgress, percent };
+  return {
+    total,
+    completed,
+    skipped,
+    missed,
+    active,
+    percent,
+    nextSessionId: nextSession?.id ?? null,
+  };
 }
 
-/** A plan is complete when every active technique is mastered (and at least one is). */
-export function isPlanComplete(progress: ProgressSummary): boolean {
-  return progress.active > 0 && progress.mastered === progress.active;
+export function isJourneyComplete(progress: JourneyProgressSummary): boolean {
+  return progress.active > 0 && progress.completed === progress.active;
+}
+
+export function getDuePracticeCards(cards: PracticeCard[], nowIso: string): PracticeCard[] {
+  const nowTime = Date.parse(nowIso);
+
+  return cards
+    .filter((card) => {
+      if (card.status === "archived" || card.status === "mastered") {
+        return false;
+      }
+
+      const dueTime = Date.parse(card.dueAt);
+      return Number.isFinite(dueTime) && dueTime <= nowTime;
+    })
+    .sort((first, second) => Date.parse(first.dueAt) - Date.parse(second.dueAt));
 }
