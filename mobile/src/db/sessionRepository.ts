@@ -101,6 +101,27 @@ export async function getAvailableSessions(): Promise<DailySession[]> {
   });
 }
 
+export async function markOverdueAvailableSessionsMissed(nowIso: string): Promise<void> {
+  await runDatabaseOperation(async (database) => {
+    await database.runAsync(
+      `
+      UPDATE ${TABLES.dailySessions}
+      SET status = 'missed'
+      WHERE status = 'available'
+        AND scheduled_for IS NOT NULL
+        AND date(scheduled_for) < date(?)
+        AND hobby_profile_id IN (
+          SELECT id FROM ${TABLES.hobbyProfiles} WHERE status = 'active'
+        )
+        AND journey_id IN (
+          SELECT id FROM ${TABLES.journeys} WHERE status = 'active'
+        );
+      `,
+      [nowIso],
+    );
+  });
+}
+
 export async function updateDailySessionStatus(
   sessionId: string,
   status: SessionStatus,

@@ -1,0 +1,471 @@
+import { StyleSheet } from "react-native";
+
+import { colors } from "../../../theme/colors";
+import { radius } from "../../../theme/radius";
+import { spacing } from "../../../theme/spacing";
+import { typography } from "../../../theme/typography";
+
+export const styles = StyleSheet.create({
+  backButton: {
+    alignItems: "center",
+    alignSelf: "flex-start",
+    backgroundColor: colors.surface.card,
+    borderColor: colors.borders.default,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: spacing.sm,
+    minHeight: 42,
+    paddingHorizontal: spacing.xl,
+  },
+  backButtonText: {
+    ...typography.labelLarge,
+    color: colors.text.primary,
+  },
+  cardMeta: {
+    color: colors.text.accent,
+    fontSize: typography.bodySmall.fontSize,
+    fontWeight: "800",
+  },
+  cardTitle: {
+    ...typography.titleSmall,
+    color: colors.text.primary,
+  },
+  cardTitleStack: {
+    flex: 1,
+    gap: spacing.xs,
+  },
+  cardTopRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.lg,
+  },
+  checkItem: {
+    ...typography.bodyMedium,
+    color: colors.text.body,
+  },
+  container: {
+    backgroundColor: colors.surface.card,
+    flexGrow: 1,
+    gap: spacing.panel,
+    minHeight: "100%",
+    padding: spacing.screen,
+    paddingBottom: spacing.screenBottom,
+    paddingTop: spacing.plansTop,
+  },
+  detailBody: {
+    ...typography.bodyLarge,
+    color: colors.text.body,
+  },
+  detailPanel: {
+    backgroundColor: colors.surface.input,
+    borderColor: colors.borders.default,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    gap: spacing.md,
+    padding: spacing.panel,
+  },
+  detailTitle: {
+    ...typography.titleSmall,
+    color: colors.text.primary,
+  },
+  emptyBody: {
+    ...typography.bodyMedium,
+    color: colors.text.muted,
+  },
+  emptyPanel: {
+    backgroundColor: colors.surface.input,
+    borderColor: colors.borders.default,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    gap: spacing.lg,
+    padding: spacing.panel,
+  },
+  emptyTitle: {
+    ...typography.titleSmall,
+    color: colors.text.primary,
+  },
+  eyebrow: {
+    color: colors.text.accent,
+    fontSize: typography.bodySmall.fontSize,
+    fontWeight: "800",
+  },
+  field: {
+    flex: 1,
+    gap: spacing.sm,
+  },
+  fieldLabel: {
+    ...typography.labelLarge,
+    color: colors.text.primary,
+  },
+  form: {
+    gap: spacing.lg,
+  },
+  formRow: {
+    flexDirection: "row",
+    gap: spacing.lg,
+  },
+  headerBlock: {
+    gap: spacing.md,
+  },
+  heroIcon: {
+    position: "absolute",
+    right: 22,
+    top: 24,
+  },
+  heroPanel: {
+    backgroundColor: colors.surface.successSoft,
+    borderRadius: 32,
+    gap: spacing.lg,
+    overflow: "hidden",
+    padding: spacing.panel + 2,
+    position: "relative",
+  },
+  hobbyGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.lg,
+  },
+  hobbyName: {
+    color: colors.text.primary,
+    fontSize: 13,
+    fontWeight: "800",
+    lineHeight: 16,
+    textAlign: "center",
+  },
+  hobbyTile: {
+    alignItems: "center",
+    backgroundColor: colors.surface.input,
+    borderColor: colors.borders.default,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    flexBasis: "30.6%",
+    flexGrow: 0,
+    flexShrink: 0,
+    gap: spacing.sm,
+    justifyContent: "center",
+    minHeight: 92,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.md,
+  },
+  iconBadge: {
+    alignItems: "center",
+    backgroundColor: colors.surface.successSoft,
+    borderColor: colors.borders.success,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    height: 46,
+    justifyContent: "center",
+    width: 46,
+  },
+  iconBadgeCompact: {
+    height: 38,
+    width: 38,
+  },
+  iconButton: {
+    alignItems: "center",
+    backgroundColor: colors.surface.inverse,
+    borderRadius: radius.pill,
+    height: 42,
+    justifyContent: "center",
+    width: 42,
+  },
+  iconButtonDisabled: {
+    opacity: 0.35,
+  },
+  iconButtonRow: {
+    flexDirection: "row",
+    gap: spacing.sm,
+  },
+  infoPill: {
+    alignItems: "center",
+    backgroundColor: colors.surface.successSoft,
+    borderRadius: radius.pill,
+    flexDirection: "row",
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  infoPillText: {
+    color: colors.text.brand,
+    fontSize: typography.labelMedium.fontSize,
+    fontWeight: "800",
+  },
+  input: {
+    ...typography.bodyLarge,
+    backgroundColor: colors.surface.input,
+    borderColor: colors.borders.default,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    color: colors.text.primary,
+    minHeight: 48,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+  },
+  keyboardShell: {
+    backgroundColor: colors.surface.card,
+    flex: 1,
+  },
+  moreSessionsRow: {
+    alignItems: "center",
+    backgroundColor: colors.surface.input,
+    borderColor: colors.borders.default,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    justifyContent: "center",
+    minHeight: 42,
+    paddingHorizontal: spacing.lg,
+  },
+  moreSessionsText: {
+    ...typography.labelLarge,
+    color: colors.text.muted,
+  },
+  notice: {
+    backgroundColor: colors.feedback.dangerBackground,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+  },
+  noticeText: {
+    ...typography.bodyMedium,
+    color: colors.text.primary,
+  },
+  pillRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+  },
+  pressed: {
+    opacity: 0.86,
+    transform: [{ scale: 0.99 }],
+  },
+  primaryButton: {
+    alignItems: "center",
+    backgroundColor: colors.surface.inverse,
+    borderRadius: radius.pill,
+    flexDirection: "row",
+    gap: spacing.sm,
+    justifyContent: "center",
+    minHeight: 52,
+    paddingHorizontal: spacing.xl,
+  },
+  primaryButtonDisabled: {
+    opacity: 0.45,
+  },
+  primaryButtonText: {
+    ...typography.labelLarge,
+    color: colors.text.inverse,
+  },
+  recoveryBody: {
+    ...typography.bodyMedium,
+    color: colors.text.body,
+  },
+  recoveryCopy: {
+    flex: 1,
+    gap: spacing.xs,
+  },
+  recoveryPanel: {
+    alignItems: "center",
+    backgroundColor: colors.surface.successSoft,
+    borderColor: colors.borders.success,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: spacing.lg,
+    padding: spacing.panel,
+  },
+  recoveryTitle: {
+    ...typography.titleSmall,
+    color: colors.text.primary,
+  },
+  reviewAction: {
+    alignItems: "center",
+    borderRadius: radius.pill,
+    flex: 1,
+    justifyContent: "center",
+    minHeight: 48,
+    paddingHorizontal: spacing.md,
+  },
+  reviewActionDisabled: {
+    opacity: 0.42,
+  },
+  reviewActionEasy: {
+    backgroundColor: colors.surface.successSoft,
+    borderColor: colors.borders.success,
+    borderWidth: 1,
+  },
+  reviewActionHard: {
+    backgroundColor: colors.feedback.dangerBackground,
+    borderColor: colors.borders.danger,
+    borderWidth: 1,
+  },
+  reviewActionOkay: {
+    backgroundColor: colors.surface.input,
+    borderColor: colors.borders.default,
+    borderWidth: 1,
+  },
+  reviewActionText: {
+    ...typography.labelLarge,
+    color: colors.text.primary,
+  },
+  reviewActions: {
+    flexDirection: "row",
+    gap: spacing.md,
+  },
+  reviewCard: {
+    backgroundColor: colors.surface.card,
+    borderColor: colors.borders.default,
+    borderRadius: 28,
+    borderWidth: 1,
+    gap: spacing.xl,
+    justifyContent: "center",
+    minHeight: 300,
+    padding: spacing.panel + 4,
+  },
+  reviewHint: {
+    ...typography.labelLarge,
+    color: colors.text.tertiary,
+    textAlign: "center",
+  },
+  reviewPrompt: {
+    ...typography.titleLarge,
+    color: colors.text.primary,
+    textAlign: "center",
+  },
+  reviewSupport: {
+    ...typography.bodyLarge,
+    color: colors.text.body,
+    textAlign: "center",
+  },
+  resourceLink: {
+    alignSelf: "flex-start",
+    backgroundColor: colors.surface.inverse,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+  },
+  resourceLinkText: {
+    ...typography.labelLarge,
+    color: colors.text.inverse,
+  },
+  secondaryButton: {
+    alignSelf: "flex-start",
+    backgroundColor: colors.surface.inverse,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+  },
+  secondaryButtonText: {
+    ...typography.labelLarge,
+    color: colors.text.inverse,
+  },
+  section: {
+    gap: spacing.lg,
+  },
+  sectionHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  sectionSubtitle: {
+    ...typography.bodyMedium,
+    color: colors.text.muted,
+  },
+  sectionTitle: {
+    ...typography.titleSmall,
+    color: colors.text.primary,
+    fontSize: 21,
+  },
+  sessionCard: {
+    backgroundColor: colors.surface.card,
+    borderColor: colors.borders.default,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    gap: spacing.lg,
+    padding: spacing.panel,
+  },
+  hobbyListCopy: {
+    flex: 1,
+    gap: spacing.sm,
+  },
+  hobbyListItem: {
+    alignItems: "center",
+    backgroundColor: colors.surface.input,
+    borderColor: colors.borders.default,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: spacing.lg,
+    padding: spacing.panel,
+  },
+  hobbyListMeta: {
+    ...typography.bodySmall,
+    color: colors.text.muted,
+  },
+  hobbyListTitle: {
+    ...typography.titleSmall,
+    color: colors.text.primary,
+    flex: 1,
+  },
+  hobbyListTitleRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.md,
+  },
+  statusBadge: {
+    backgroundColor: colors.surface.successSoft,
+    borderColor: colors.borders.success,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+  },
+  statusBadgeText: {
+    ...typography.labelSmall,
+    color: colors.text.success,
+  },
+  summaryGrid: {
+    flexDirection: "row",
+    gap: spacing.md,
+  },
+  summaryLabel: {
+    ...typography.labelSmall,
+    color: colors.text.muted,
+  },
+  summaryNumber: {
+    ...typography.titleLarge,
+    color: colors.text.primary,
+  },
+  summaryTile: {
+    backgroundColor: colors.surface.input,
+    borderColor: colors.borders.default,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    flex: 1,
+    gap: spacing.xs,
+    padding: spacing.lg,
+  },
+  skipButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 44,
+  },
+  skipButtonDisabled: {
+    opacity: 0.42,
+  },
+  skipButtonText: {
+    ...typography.labelLarge,
+    color: colors.text.muted,
+  },
+  subtitle: {
+    ...typography.bodyLarge,
+    color: colors.text.muted,
+  },
+  textArea: {
+    minHeight: 96,
+    textAlignVertical: "top",
+  },
+  title: {
+    ...typography.displaySmall,
+    color: colors.text.primary,
+  },
+});

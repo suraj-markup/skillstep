@@ -16,6 +16,7 @@ import {
   getAvailableSessions,
   getDuePracticeCards,
   getHobbyProfiles,
+  markOverdueAvailableSessionsMissed,
   recordPracticeCardReview,
   saveGeneratedJourney,
   saveSessionReflection,
@@ -52,12 +53,15 @@ export function useDailyJourneys(): UseDailyJourneysResult {
 
   const refresh = useCallback(async () => {
     setErrorMessage(null);
+    const nowIso = new Date().toISOString();
+
+    await markOverdueAvailableSessionsMissed(nowIso);
 
     const [profiles, journeys, sessions, cards] = await Promise.all([
       getHobbyProfiles(),
       getActiveJourneys(),
       getAvailableSessions(),
-      getDuePracticeCards(new Date().toISOString()),
+      getDuePracticeCards(nowIso),
     ]);
 
     setHobbyProfiles(profiles);

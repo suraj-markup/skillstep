@@ -25,6 +25,7 @@ export {
   getReflectionForSession,
   getSessionById,
   getSessionsForJourney,
+  markOverdueAvailableSessionsMissed,
   saveSessionReflection,
   updateDailySessionStatus,
 } from "./sessionRepository";

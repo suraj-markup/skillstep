@@ -255,7 +255,8 @@ async function replaceSessions(
         validSession.dayNumber,
         validSession.title,
         validSession.estimatedMinutes,
-        validSession.scheduledFor,
+        validSession.scheduledFor ??
+          getScheduledDate(validSession.createdAt, validSession.dayNumber),
         validSession.status,
         validSession.learn,
         validSession.resource ? JSON.stringify(validSession.resource) : null,
@@ -380,4 +381,15 @@ function mapJourneyRow(row: JourneyRow): Journey {
     createdAt: row.created_at,
     completedAt: row.completed_at,
   });
+}
+
+function getScheduledDate(createdAt: string, dayNumber: number): string {
+  const createdDate = new Date(createdAt);
+
+  if (Number.isNaN(createdDate.getTime())) {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  createdDate.setDate(createdDate.getDate() + dayNumber - 1);
+  return createdDate.toISOString().slice(0, 10);
 }
