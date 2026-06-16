@@ -1,0 +1,13 @@
+node_modules
+mobile/android
+mobile/ios
+mobile/.expo
+dist
+.npm-cache
+coverage
+*.apk
+*.aab
+*.keystore
+*.jks
+.env
+*.local

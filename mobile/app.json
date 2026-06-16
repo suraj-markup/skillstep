@@ -10,6 +10,7 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.skillstep.app",
       "adaptiveIcon": {
         "backgroundColor": "#F7F3EA",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -21,6 +22,15 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": ["expo-sqlite"]
+    "plugins": [
+      "expo-sqlite",
+      "expo-updates"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "1753d245-069b-43cc-9e10-af81df3654a4"
+      }
+    },
+    "owner": "suraj_markup"
   }
 }

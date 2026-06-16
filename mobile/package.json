@@ -4,11 +4,12 @@
   "main": "index.ts",
   "dependencies": {
     "@skillstep/shared": "*",
-    "expo": "~56.0.11",
+    "expo": "~56.0.12",
     "expo-constants": "~56.0.18",
     "expo-haptics": "~56.0.3",
     "expo-sqlite": "~56.0.5",
     "expo-status-bar": "~56.0.4",
+    "expo-updates": "~56.0.19",
     "lucide-react-native": "^1.18.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
@@ -27,9 +28,11 @@
   },
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start --web",
+    "update:preview": "EXPO_PUBLIC_API_BASE_URL=https://skillstep-beta.vercel.app/api npx eas-cli update --channel preview",
+    "update:production": "EXPO_PUBLIC_API_BASE_URL=https://skillstep-beta.vercel.app/api npx eas-cli update --channel production",
     "typecheck": "tsc"
   },
   "private": true

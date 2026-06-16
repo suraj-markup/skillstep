@@ -223,20 +223,32 @@ interface PrimaryActionProps {
 }
 
 function PrimaryAction({ disabled = false, label, onPress }: PrimaryActionProps) {
+  const [isPending, setIsPending] = useState(false);
+  const isDisabled = disabled || isPending;
+
   async function handlePress() {
-    await tapFeedback();
-    await onPress();
+    if (isDisabled) {
+      return;
+    }
+
+    setIsPending(true);
+    try {
+      await tapFeedback();
+      await onPress();
+    } finally {
+      setIsPending(false);
+    }
   }
 
   return (
     <Pressable
       accessibilityRole="button"
-      disabled={disabled}
+      disabled={isDisabled}
       onPress={() => void handlePress()}
       style={({ pressed }) => [
         styles.primaryAction,
-        disabled ? styles.primaryActionDisabled : undefined,
-        pressed && !disabled ? styles.primaryActionPressed : undefined,
+        isDisabled ? styles.primaryActionDisabled : undefined,
+        pressed && !isDisabled ? styles.primaryActionPressed : undefined,
       ]}
     >
       <Text style={styles.primaryActionLabel}>{label}</Text>

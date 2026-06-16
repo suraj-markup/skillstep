@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "build": "esbuild src/index.ts --bundle --platform=node --target=node22 --format=esm --outfile=dist/index.js --sourcemap",
+    "dev": "tsx watch src/dev.ts",
     "typecheck": "tsc",
     "test": "vitest run"
   },

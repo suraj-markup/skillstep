@@ -31,7 +31,7 @@ function readDevHost(): string | null {
 }
 
 function readBrowserHost(): string | null {
-  if (typeof window === "undefined") {
+  if (typeof window === "undefined" || !window.location) {
     return null;
   }
 

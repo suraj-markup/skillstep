@@ -1,7 +1,7 @@
 import type { DailySession } from "@skillstep/shared";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, BackHandler, ScrollView } from "react-native";
+import { ActivityIndicator, BackHandler, Platform, ScrollView } from "react-native";
 
 import { getUserProfile, saveUserProfile, type UserProfile } from "../../../db";
 import { colors } from "../../../theme/colors";
@@ -79,7 +79,7 @@ export function DailyHomeScreen() {
   }
 
   useEffect(() => {
-    if (!BackHandler || typeof BackHandler.addEventListener !== "function") {
+    if (Platform.OS === "web" || typeof BackHandler.addEventListener !== "function") {
       return;
     }
 

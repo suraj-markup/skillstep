@@ -1,6 +1,7 @@
 {
   "name": "skillstep",
   "private": true,
+  "type": "module",
   "version": "0.1.0",
   "description": "Get better at anything — six techniques at a time.",
   "workspaces": [
@@ -9,6 +10,7 @@
     "shared"
   ],
   "scripts": {
+    "build:vercel": "npm run build -w @skillstep/server",
     "dev:mobile": "npm run start -w @skillstep/mobile",
     "dev:server": "npm run dev -w @skillstep/server",
     "typecheck": "npm run typecheck --workspaces --if-present",
@@ -20,6 +22,7 @@
   "devDependencies": {
     "@biomejs/biome": "^2.5.0",
     "@types/node": "^25.9.3",
+    "esbuild": "^0.28.1",
     "typescript": "^6.0.3",
     "vitest": "^4.1.8"
   }

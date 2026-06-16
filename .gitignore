@@ -1,6 +1,7 @@
 node_modules/
 .npm-cache/
 dist/
+server/dist/
 .expo/
 android/
 ios/
@@ -10,3 +11,4 @@ coverage/
 .DS_Store
 .vercel/
 .claude/
+.vercel
