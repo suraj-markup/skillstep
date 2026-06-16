@@ -6,7 +6,11 @@ import { GeminiProvider, MockAiProvider } from "./providers/ai";
 loadEnvFiles();
 const env = getEnv();
 const aiProvider = env.geminiApiKey
-  ? new GeminiProvider({ apiKey: env.geminiApiKey, model: env.geminiModel })
+  ? new GeminiProvider({
+      apiKey: env.geminiApiKey,
+      model: env.geminiModel,
+      youtubeApiKey: env.youtubeApiKey,
+    })
   : new MockAiProvider();
 const app = createApp({ aiProvider });
 
