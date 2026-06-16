@@ -1,16 +1,30 @@
 export { getDatabase } from "./database";
-export { getUserHobbies, saveUserHobby, type UserHobby } from "./hobbyRepository";
+export {
+  getHobbyProfileById,
+  getHobbyProfiles,
+  saveHobbyProfile,
+  updateHobbyProfileStatus,
+} from "./hobbyProfileRepository";
+export {
+  getActiveJourneys,
+  getJourneyById,
+  getJourneysForHobby,
+  saveGeneratedJourney,
+} from "./journeyRepository";
 export { runMigrations } from "./migrations";
 export {
-  getPlanById,
-  getPlans,
-  getTechniqueContent,
-  getTechniqueUserStates,
-  saveCurrentPlanForHobby,
-  savePlan,
-  saveTechniqueContent,
-  toggleMasteryCriterion,
-  updateTechniqueStatus,
-} from "./planRepository";
+  getDuePracticeCards,
+  getPracticeCardsForSession,
+  recordPracticeCardReview,
+} from "./practiceCardRepository";
 export { getUserProfile, saveUserProfile, type UserProfile } from "./profileRepository";
+export { getProjectsForJourney, updateProjectStatus } from "./projectRepository";
 export { CREATE_INITIAL_SCHEMA_SQL, DATABASE_NAME, DATABASE_VERSION, TABLES } from "./schema";
+export {
+  getAvailableSessions,
+  getReflectionForSession,
+  getSessionById,
+  getSessionsForJourney,
+  saveSessionReflection,
+  updateDailySessionStatus,
+} from "./sessionRepository";
