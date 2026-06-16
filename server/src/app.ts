@@ -1,10 +1,8 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { registerPlanController } from "./controllers";
+import { registerJourneyController } from "./controllers";
 import { type AiProvider, MockAiProvider } from "./providers/ai";
-import { NoopVideoProvider, type VideoProvider } from "./providers/video";
-import { NoopPlanRepository, type PlanRepository } from "./repositories";
-import { PlanService } from "./services";
+import { JourneyService } from "./services";
 
 /**
  * The Hono app, separated from the Node entry point (index.ts) so tests can
@@ -13,15 +11,11 @@ import { PlanService } from "./services";
  */
 export interface AppDependencies {
   aiProvider?: AiProvider;
-  planRepository?: PlanRepository;
-  videoProvider?: VideoProvider;
 }
 
 export function createApp(dependencies: AppDependencies = {}) {
   const aiProvider = dependencies.aiProvider ?? new MockAiProvider();
-  const planRepository = dependencies.planRepository ?? new NoopPlanRepository();
-  const videoProvider = dependencies.videoProvider ?? new NoopVideoProvider();
-  const planService = new PlanService({ aiProvider, planRepository, videoProvider });
+  const journeyService = new JourneyService({ aiProvider });
   const app = new Hono().basePath("/api");
 
   app.use(
@@ -34,7 +28,7 @@ export function createApp(dependencies: AppDependencies = {}) {
   );
 
   app.get("/health", (c) => c.json({ ok: true, service: "skillstep-api" }));
-  registerPlanController(app, planService);
+  registerJourneyController(app, journeyService);
 
   return app;
 }

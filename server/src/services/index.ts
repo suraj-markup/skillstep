@@ -1,1 +1,1 @@
-export { InvalidPlanOutputError, PlanService } from "./planService";
+export { InvalidJourneyOutputError, JourneyService } from "./journeyService";

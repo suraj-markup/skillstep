@@ -1,4 +1,4 @@
-import type { GeneratePlanInput, Plan } from "@skillstep/shared";
+import type { GeneratedJourney, GenerateJourneyInput } from "@skillstep/shared";
 
 export class AiProviderError extends Error {
   constructor(
@@ -11,5 +11,5 @@ export class AiProviderError extends Error {
 }
 
 export interface AiProvider {
-  generatePlan(input: GeneratePlanInput): Promise<Plan>;
+  generateJourney(input: GenerateJourneyInput): Promise<GeneratedJourney>;
 }

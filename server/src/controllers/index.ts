@@ -1,1 +1,1 @@
-export { registerPlanController } from "./planController";
+export { registerJourneyController } from "./journeyController";
