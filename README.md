@@ -1,45 +1,114 @@
-# Skillstep
+# BetterHobby
 
-**Get better at anything — six techniques at a time.**
+**Pick a hobby. Practice daily. Track progress. Level up.**
 
-Skillstep turns a vague hobby ambition ("get better at chess") into a finite, personal plan:
-5–8 techniques chosen by AI for your exact level jump, each with curated videos, a short
-primer, a concrete practice drill, and mastery criteria you check off as you improve.
-Strike out what isn't for you; the plan serves you, not the other way around.
+BetterHobby is a local-first daily hobby companion. Instead of handing users a long,
+static course plan, it turns a hobby goal into short practice sessions the user can
+complete day by day. The app remembers active hobbies, today's sessions, reflections,
+review cards, and progress so a learner always knows what to do next.
 
-> Status: in active development. See [docs/DEVLOG.md](docs/DEVLOG.md) for the build journal.
+The app, packages, database, and deployed API are still internally named Skillstep while
+the product rename is in progress.
 
-## Docs
+> Status: active development. See [docs/DEVLOG.md](docs/DEVLOG.md) for the build
+> journal and current implementation notes.
 
-- [Product requirements](docs/PRD.md) — problem, user stories, scope
-- [Architecture](docs/ARCHITECTURE.md) — system design, data flow, failure modes
-- [Decision records](docs/adr/) — why each significant choice was made
+## Product
 
-## Workspace layout
+BetterHobby is built for people with limited time who want steady improvement without
+turning a hobby into a job.
 
+The core loop:
+
+1. Add a hobby with your current level, goal, available minutes per day, and preferred
+   practice days.
+2. Generate a journey with daily sessions, milestones, practice cards, and optional
+   project work.
+3. Open Today to see the sessions and review cards that need attention now.
+4. Complete each session through Learn, Resource, Practice, Check Yourself, and Reflect
+   sections.
+5. Review weak areas later through spaced practice cards.
+6. Keep multiple hobbies active from My Hobbies and continue leveling up over time.
+
+## Current App Surface
+
+- First-run onboarding stores a local user profile.
+- Hobby setup creates a generated journey from a hobby, level, goal, and schedule.
+- Today shows available sessions, due practice cards, and entry points for adding or
+  managing hobbies.
+- Session detail guides the learner through a concrete practice task and reflection.
+- Review supports due practice cards with difficulty-based scheduling.
+- My Hobbies lists saved hobby profiles and their available sessions.
+- SQLite persistence keeps generated journeys and progress on device.
+
+## Tech Stack
+
+This is an npm workspaces monorepo:
+
+```txt
+mobile   Expo / React Native app for Android, iOS, and web
+server   Hono API for journey generation and provider isolation
+shared   Zod schemas, shared TypeScript types, fixtures, and pure domain logic
+api      Vercel serverless entrypoint for the Hono app
+docs     Product docs, architecture notes, dev log, and ADRs
 ```
-shared   Domain model (Zod schemas) + pure domain logic, shared by app and server
-server   Hono API — AI plan generation, content curation, caching
-mobile   Expo (React Native) app — wizard, plan view, technique workspace
-```
 
-## Getting started
+Key choices:
+
+- Local-first user data with Expo SQLite.
+- Shared Zod schemas as the contract between mobile, server, and persisted data.
+- Stateless backend: it holds secrets and calls AI providers, but does not store user
+  progress.
+- Gemini-backed generation when `GEMINI_API_KEY` is set, with a mock provider fallback
+  for local development and tests.
+- Expo Updates / EAS support for preview and production mobile updates.
+- Vercel deployment support for the API.
+
+## API
+
+The Hono app is mounted under `/api`.
+
+| Endpoint | Purpose |
+| --- | --- |
+| `GET /api/health` | Health check for the API |
+| `POST /api/journeys` | Generate a hobby profile, journey, daily sessions, practice cards, projects, and next-journey suggestions |
+
+The `POST /api/journeys` request body is validated with `GenerateJourneyInputSchema`
+from `shared/src/domain.ts`. Provider output is validated with `GeneratedJourneySchema`
+before it is returned to the app.
+
+## Getting Started
+
+Install dependencies:
 
 ```bash
 npm install
-cp .env.example .env       # add your own API keys (see docs/adr/0005)
-npm run dev:server         # API on :8787
-npm run dev:mobile         # Expo dev server — press "a" for Android emulator,
-                           # or scan the QR code with Expo Go on your phone
 ```
 
-The app also runs in a browser (`w` in the Expo CLI) via React Native Web — that's the
-"one codebase, phone and desktop" story (see docs/adr/0002).
+Create local environment variables:
 
-## Expo Go on your phone
+```bash
+cp .env.example .env
+```
 
-Your phone cannot use `localhost` to reach the API running on your laptop. Set the
-mobile API URL to your laptop's LAN IP before starting Expo:
+Run the API:
+
+```bash
+npm run dev:server
+```
+
+Run the Expo app:
+
+```bash
+npm run dev:mobile
+```
+
+In the Expo CLI, press `a` for Android, `i` for iOS, or `w` for web.
+
+## Physical Device Setup
+
+A phone cannot reach the API through your laptop's `localhost`. Set the mobile API URL
+to your laptop's LAN IP before starting Expo:
 
 ```bash
 EXPO_PUBLIC_API_BASE_URL=http://YOUR_LAPTOP_IP:8787/api npm run dev:mobile
@@ -48,26 +117,51 @@ EXPO_PUBLIC_API_BASE_URL=http://YOUR_LAPTOP_IP:8787/api npm run dev:mobile
 Example:
 
 ```bash
-EXPO_PUBLIC_API_BASE_URL=http://192.168.88.14:8787/api npm run dev:mobile
+EXPO_PUBLIC_API_BASE_URL=http://192.168.1.20:8787/api npm run dev:mobile
 ```
 
-Keep `npm run dev:server` running in another terminal, keep your phone and laptop on the
-same Wi-Fi, then scan the Expo QR code with Expo Go.
+Keep `npm run dev:server` running in another terminal and make sure the phone and laptop
+are on the same Wi-Fi.
 
-## Gemini setup
+## AI Setup
 
-Add your Gemini key to the root `.env` file:
+The server uses the mock AI provider by default. To use Gemini locally, add a key to the
+root `.env` file:
 
 ```bash
 GEMINI_API_KEY=your_key_here
 GEMINI_MODEL=gemini-2.5-flash
 ```
 
-Restart `npm run dev:server` after changing `.env`. When `GEMINI_API_KEY` is present,
-the server uses Gemini; otherwise it falls back to the mock AI provider.
+Restart the server after changing `.env`.
 
-## Quality gates
+`YOUTUBE_API_KEY` is reserved for video/resource work, but the current journey endpoint
+does not require it.
+
+## Scripts
+
+```bash
+npm run dev:server      # start the Hono API on PORT, default 8787
+npm run dev:mobile      # start Expo
+npm run typecheck       # TypeScript across workspaces
+npm run lint            # Biome check
+npm test                # workspace tests
+npm run build           # workspace builds
+npm run build:vercel    # server bundle for Vercel
+```
+
+## Quality Gates
+
+Before shipping a change, run:
 
 ```bash
 npm run typecheck && npm run lint && npm test
 ```
+
+## Docs
+
+- [BetterHobby daily companion plan](docs/DAILY_HOBBY_COMPANION_PLAN.md)
+- [Product requirements](docs/PRD.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Decision records](docs/adr/)
+- [Dev log](docs/DEVLOG.md)
